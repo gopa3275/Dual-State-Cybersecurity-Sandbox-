@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybersecurity Tools Sandbox Suite</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <header class="border-b border-slate-800 bg-slate-950 p-5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shrink-0">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight text-indigo-400">Dual State Cybersecurity Sandbox & Security Testing Lab</h1>
+            <p class="text-xs text-slate-400">Interactive testing environment demonstrating web vulnerabilities and defensive security tools.</p>
+        </div>
+        
+        <div class="flex flex-wrap gap-4 items-center w-full lg:w-auto justify-between lg:justify-end">
+            <div class="flex gap-3">
+                <div class="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-xl text-center min-w-[110px]">
+                    <div class="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Attacks Blocked</div>
+                    <div id="metricBlocked" class="text-base font-bold text-emerald-400">0</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-xl text-center min-w-[110px]">
+                    <div class="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Flaws Exploited</div>
+                    <div id="metricExploited" class="text-base font-bold text-rose-400">0</div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-xl text-center min-w-[110px]">
+                    <div class="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Threats Spotted</div>
+                    <div id="metricIntel" class="text-base font-bold text-amber-400">0</div>
+                </div>
+            </div>
+            
+            <div class="bg-slate-900 p-2 rounded-xl border border-slate-800 flex items-center space-x-3">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Security Protection Switch:</span>
+                <button id="securityToggle" onclick="toggleSecurity()" class="px-3 py-1 rounded text-xs font-extrabold bg-rose-600 text-white transition-all cursor-pointer select-none">
+                    VULNERABLE (OFF)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <aside class="w-64 bg-slate-950 border-r border-slate-800 p-4 flex flex-col gap-1.5 overflow-y-auto">
+            <div class="text-[10px] font-bold tracking-widest uppercase text-slate-500 px-3 mb-2">Select a Security Tool</div>
+            
+            <button onclick="switchTab('tab-pwd')" id="btn-tab-pwd" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 transition-all cursor-pointer">
+                01 // Password Strength Analyser
+            </button>
+            <button onclick="switchTab('tab-phish')" id="btn-tab-phish" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
+                02 // Phishing Link Detector
+            </button>
+            <button onclick="switchTab('tab-xss')" id="btn-tab-xss" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
+                03 // XSS Injection Sandbox
+            </button>
+            <button onclick="switchTab('tab-brute')" id="btn-tab-brute" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
+                04 // Brute Force Simulator
+            </button>
+            <button onclick="switchTab('tab-logs')" id="btn-tab-logs" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
+                05 // Server Log Analyzer
+            </button>
+            <button onclick="switchTab('tab-integrity')" id="btn-tab-integrity" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
+                06 // File Integrity Checker
+            </button>
+            
+            <div class="mt-auto border-t border-slate-800 pt-4 px-3 text-[10px] text-slate-500 font-mono">
+                Lab Status: <br><span id="globalLabelUI" class="text-rose-500 font-bold">VULNERABLE MODE ACTIVE</span>
+            </div>
+        </aside>
+
+        <main class="flex-1 bg-slate-900 p-6 overflow-y-auto">
+
+            <div id="tab-pwd" class="tab-content space-y-6">
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-slate-100 mb-2">01 // Password Strength & Entropy Analyzer</h2>
+                    <p class="text-xs text-slate-400 max-w-3xl mb-6">Tests how hard a password is to guess. It calculates mathematical entropy (randomness bits) and screens for weak patterns like sequential numbers or basic words.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2 space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Type a Password to Test</label>
+                                <input id="pwdInput" type="text" value="admin123" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-xs font-mono text-amber-400 focus:outline-none">
+                            </div>
+                            <button onclick="runPasswordAnalysis()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-all cursor-pointer">Run Password Audit</button>
+                        </div>
+                        
+                        <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 font-mono text-xs flex flex-col justify-between">
+                            <div class="space-y-2">
+                                <div class="text-slate-500 text-[10px] uppercase font-bold">// Scanner Metrics:</div>
+                                <div>Entropy Score: <span id="pwdEntropy" class="text-indigo-400 font-bold">0.00 bits</span></div>
+                                <div>Strength Rating: <span id="pwdDensity" class="text-rose-400 font-bold">N/A</span></div>
+                            </div>
+                            <div id="pwdFeedback" class="text-[11px] text-slate-400 italic bg-slate-950 p-2.5 border border-slate-800 rounded mt-4">Waiting for password analysis input...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-phish" class="tab-content hidden space-y-6">
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-slate-100 mb-2">02 // Phishing Link Scanner Tool</h2>
+                    <p class="text-xs text-slate-400 max-w-3xl mb-6">Inspects suspicious links to see if they are scams. It searches for links that hide behind dangerous raw IP numbers instead of standard domain names, and flags typical trick keywords.</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Paste Web Link (URL) to Scan</label>
+                            <input id="urlInput" type="text" value="http://192.168.2.14/secure-signin-banking" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2.5 text-xs font-mono text-amber-400 focus:outline-none">
+                        </div>
+                        <button onclick="runPhishingDetector()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-all cursor-pointer">Analyze Link</button>
+                    </div>
+
+                    <div class="mt-6 bg-slate-900 border border-slate-800 rounded-lg p-4 font-mono text-xs">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
+                            <span class="text-slate-500 font-bold uppercase text-[10px]">// Link Assessment Results:</span>
+                            <span id="urlRisk" class="px-2 py-0.5 rounded font-bold text-[10px] bg-slate-800 text-slate-400">NONE</span>
+                        </div>
+                        <ul id="urlFindings" class="space-y-1.5 text-slate-300 list-disc list-inside">
+                            <li class="list-none text-slate-600 italic">No scanning data submitted yet.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-xss" class="tab-content hidden space-y-6">
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-slate-100 mb-2">03 // Cross-Site Scripting (XSS) Vulnerability Lab</h2>
+                    <p class="text-xs text-slate-400 max-w-3xl mb-6">Demonstrates code injection flaws. In Vulnerable Mode, typing script tags allows code to execute natively in the browser. In Secure Mode, the backend safely sanitizes inputs to neutralize the code.</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Type Custom Code Payload Vector</label>
+                            <textarea id="xssInput" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-xs font-mono text-amber-400 focus:outline-none"><script>alert('XSS Exploit Works!')</script></textarea>
+                        </div>
+                        <button onclick="runXssScanner()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-all cursor-pointer">Inject Input Vector</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                        <div class="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                            <div class="font-mono text-[10px] text-slate-500 uppercase font-bold mb-2">// Web Page Output Window:</div>
+                            <div id="xssOutput" class="bg-slate-950 p-3 rounded border border-slate-800 text-xs text-slate-400 min-h-[50px] break-all">Awaiting input submission data...</div>
+                            <div id="xssVerdict" class="text-[10px] text-slate-500 italic mt-2 font-mono"></div>
+                        </div>
+                        
+                        <div id="xssCodeBlock" class="hidden bg-slate-900 border border-slate-800 rounded-lg p-4 font-mono text-xs flex flex-col justify-between">
+                            <div class="text-[10px] text-indigo-400 uppercase font-bold mb-1">// Active Backend Filter Logic Monitor:</div>
+                            <pre id="xssSnippet" class="text-indigo-300 bg-slate-950 p-2.5 rounded border border-indigo-950 whitespace-pre overflow-x-auto text-[11px]"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-brute" class="tab-content hidden space-y-6">
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-slate-100 mb-2">04 // Automated Login Brute Force Simulator</h2>
+                    <p class="text-xs text-slate-400 max-w-3xl mb-6">Tests a login interface under rapid guessing attacks. Secure Mode deploys defensive rate limiting, instantly locking out an attacking IP after 3 failures to secure the boundary.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Username Input Field</label>
+                                <input id="bruteUser" type="text" value="admin" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-xs text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold tracking-wider text-slate-400 mb-1.5">Password Input Vector (Correct: PASSWORD123)</label>
+                                <input id="brutePass" type="text" placeholder="Type password entry guess..." class="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-xs text-amber-400 font-mono focus:outline-none">
+                            </div>
+                        </div>
+                        <button onclick="runBruteSimulator()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-all cursor-pointer">Submit Login Attempt</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                        <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 font-mono text-xs">
+                            <div class="text-slate-500 text-[10px] uppercase font-bold mb-2">// Server Login Response Terminal:</div>
+                            <pre id="bruteTerminal" class="text-emerald-400 bg-slate-950 p-3 rounded border border-slate-800 min-h-[50px] whitespace-pre-wrap">Awaiting operational login transaction...</pre>
+                        </div>
+                        
+                        <div id="bruteCodeBlock" class="hidden bg-slate-900 border border-slate-800 rounded-lg p-4 font-mono text-xs">
+                            <div class="text-[10px] text-indigo-400 uppercase font-bold mb-2">// Implemented Rate-Limiter Defensive Logic:</div>
+                            <pre id="bruteSnippet" class="text-indigo-300 bg-slate-950 p-3 rounded border border-indigo-950 whitespace-pre overflow-x-auto text-[11px]"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-logs" class="tab-content hidden space-y-6">
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-slate-100 mb-2">05 // Security Log Analyzer Platform</h2>
+                    <p class="text-xs text-slate-400 max-w-3xl mb-6">Acts like an automated log auditing monitor. It parses raw system activity logs, instantly flagging consecutive authentication rejections or unauthorized page requests.</p>
+                    
+                    <button onclick="runLogAnalyzer()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-all cursor-pointer mb-4">Ingest & Read Live Server Logs</button>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+                        <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 font-mono text-xs">
+                            <div class="text-slate-500 font-bold uppercase text-[10px] mb-2">// Raw Firewall System Log Data Stream:</div>
+                            <div id="rawLogDump" class="bg-slate-950 p-3 border border-slate-800 rounded text-slate-400 space-y-1 text-[11px] min-h-[100px] whitespace-pre-wrap">Awaiting log analyzer stream upload...</div>
+                        </div>
+                        
+                        <div class="bg-slate-900 border border-slate-800 rounded-lg p-4 font-mono text-xs">
+                            <div class="text-rose-500 font-bold uppercase text-[10px] mb-2">// Automated Audit Detections & Alerts:</div>
+                            <ul id="logFindings" class="bg-slate-950 p-3 border border-slate-800 rounded space-y-1.5 list-disc list-inside text-slate-300 min-h-[100px]">
+                                <li class="list-none text-slate-600 italic">No alerts triggered yet.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-integrity" class="tab-content hidden space-y-6">
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
+                    <h2 class="text-lg font-bold text-slate-100 mb-2">06 // Cryptographic File Integrity Verification Utility</h2>
+                    <p class="text-xs text-slate-400 max-w-3xl mb-6">Uses high-security calculations to trace unauthorized file edits. By evaluating active code signatures against clean baseline profiles, it exposes configuration changes immediately.</p>
+                    
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center space-x-3 w-fit mb-4">
+                        <input type="checkbox" id="tamperCheck" class="w-4 h-4 rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-0 cursor-pointer">
+                        <label for="tamperCheck" class="text-xs font-bold text-rose-400 select-none cursor-pointer">Inject Malicious Code Modification into System Configuration File</label>
+                    </div>
+                    <button onclick="runFileIntegrityCheck()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-all cursor-pointer">Calculate Hash Verification Check</button>
+
+                    <div class="mt-6 bg-slate-900 border border-slate-800 rounded-lg p-5 font-mono text-xs space-y-4">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <span class="text-slate-500 uppercase font-bold text-[10px]">// Hash Engine Diagnostics:</span>
+                            <span id="hashStatus" class="font-bold text-slate-400">UNKNOWN</span>
+                        </div>
+                        <div class="space-y-1.5 text-[11px]">
+                            <div class="break-all">Trusted Baseline Hash (SHA-256): <br><span id="hashBase" class="text-indigo-400 font-bold">N/A</span></div>
+                            <div class="break-all">Current Computed Hash (SHA-256): <br><span id="hashLive" class="text-amber-400 font-bold">N/A</span></div>
+                        </div>
+                        <p id="hashExplanation" class="text-xs text-slate-400 italic font-sans bg-slate-950 p-3 border border-slate-800 rounded mt-2"></p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        let isSecurityOn = false;
+
+        function switchTab(targetId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(targetId).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer";
+            });
+            document.getElementById(`btn-${targetId}`).className = "tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 transition-all cursor-pointer";
+        }
+
+        async function fetchMetrics() {
+            try {
+                const res = await fetch('/api/metrics');
+                const data = await res.json();
+                document.getElementById('metricBlocked').innerText = data.total_attacks_blocked;
+                document.getElementById('metricExploited').innerText = data.vulnerabilities_exploited;
+                document.getElementById('metricIntel').innerText = data.malicious_indicators_detected;
+            } catch (e) { console.error(e); }
+        }
+
+        function toggleSecurity() {
+            isSecurityOn = !isSecurityOn;
+            const btn = document.getElementById('securityToggle');
+            const labelUI = document.getElementById('globalLabelUI');
+            
+            if(isSecurityOn) {
+                btn.innerText = "SECURE (ON)";
+                btn.className = "px-3 py-1 rounded text-xs font-extrabold bg-emerald-600 text-white transition-all cursor-pointer select-none";
+                labelUI.innerText = "DEFENSIVE POLICIES ENFORCED";
+                labelUI.className = "text-emerald-400 font-bold";
+            } else {
+                btn.innerText = "VULNERABLE (OFF)";
+                btn.className = "px-3 py-1 rounded text-xs font-extrabold bg-rose-600 text-white transition-all cursor-pointer select-none";
+                labelUI.innerText = "VULNERABLE MODE ACTIVE";
+                labelUI.className = "text-rose-500 font-bold";
+            }
+            document.getElementById('xssCodeBlock').classList.add('hidden');
+            document.getElementById('bruteCodeBlock').classList.add('hidden');
+        }
+
+        async function runPasswordAnalysis() {
+            const pwd = document.getElementById('pwdInput').value;
+            const res = await fetch('/api/analyze_password', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ password: pwd })
+            });
+            const data = await res.json();
+            document.getElementById('pwdEntropy').innerText = `${data.entropy} bits`;
+            document.getElementById('pwdDensity').innerText = data.density;
+            document.getElementById('pwdFeedback').innerText = data.feedback;
+            if(data.density.includes("WEAK")) {
+                document.getElementById('pwdDensity').className = "text-rose-400 font-bold";
+            } else if(data.density.includes("MODERATE")) {
+                document.getElementById('pwdDensity').className = "text-amber-400 font-bold";
+            } else { document.getElementById('pwdDensity').className = "text-emerald-400 font-bold"; }
+            fetchMetrics();
+        }
+
+        async function runPhishingDetector() {
+            const link = document.getElementById('urlInput').value;
+            const res = await fetch('/api/detect_phishing', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ url: link })
+            });
+            const data = await res.json();
+            const tag = document.getElementById('urlRisk');
+            tag.innerText = data.risk_level;
+            tag.className = data.risk_level.includes("HIGH") ? "px-2 py-0.5 rounded font-bold text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30" : "px-2 py-0.5 rounded font-bold text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+            
+            const list = document.getElementById('urlFindings');
+            list.innerHTML = "";
+            data.findings.forEach(str => {
+                const li = document.createElement('li');
+                li.innerText = str;
+                if(str.includes("Critical")) li.className = "text-rose-400 font-bold";
+                list.appendChild(li);
+            });
+            fetchMetrics();
+        }
+
+        async function runXssScanner() {
+            const txt = document.getElementById('xssInput').value;
+            const out = document.getElementById('xssOutput');
+            const verdict = document.getElementById('xssVerdict');
+            const codeBlock = document.getElementById('xssCodeBlock');
+            const snip = document.getElementById('xssSnippet');
+
+            const res = await fetch('/api/scan_xss', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ payload: txt, security_on: isSecurityOn })
+            });
+            const data = await res.json();
+            verdict.innerText = data.verdict;
+            
+            if (isSecurityOn) {
+                out.innerText = data.output;
+                out.className = "p-3 bg-slate-950 rounded text-emerald-400 min-h-[50px] break-all border border-emerald-900/40";
+                snip.innerText = `🛡️ Applied Backend Protection Fix (HTML Encoding):\n\n${data.code}`;
+                codeBlock.classList.remove('hidden');
+            } else {
+                out.innerHTML = data.output;
+                out.className = "p-3 bg-slate-950 rounded text-rose-400 min-h-[50px] break-all border border-rose-900/40";
+                snip.innerText = `🚨 Exploited Vulnerability Path Code Structure:\n\n${data.code}`;
+                codeBlock.classList.remove('hidden');
+                
+                if (data.output.toLowerCase().includes("<script>")) {
+                    const js = data.output.replace(/<script>/gi, "").replace(/<\/script>/gi, "");
+                    setTimeout(() => { eval(js); }, 40);
+                }
+            }
+            fetchMetrics();
+        }
+
+        async function runBruteSimulator() {
+            const u = document.getElementById('bruteUser').value;
+            const p = document.getElementById('brutePass').value;
+            const term = document.getElementById('bruteTerminal');
+            const codeBlock = document.getElementById('bruteCodeBlock');
+            const snip = document.getElementById('bruteSnippet');
+
+            const res = await fetch('/api/brute_login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username: u, password: p, security_on: isSecurityOn })
+            });
+            const data = await res.json();
+            term.innerText = data.message;
+            term.className = res.ok ? "text-emerald-400 bg-slate-950 p-3 rounded border border-slate-800 min-h-[50px] whitespace-pre-wrap" : "text-rose-400 bg-slate-950 p-3 rounded border border-slate-800 min-h-[50px] whitespace-pre-wrap";
+            
+            if (isSecurityOn && data.code) {
+                snip.innerText = `🛡️ Enforced Rate Limiter Delay Middleware Script:\n\n${data.code}`;
+                codeBlock.classList.remove('hidden');
+            } else { codeBlock.classList.add('hidden'); }
+            fetchMetrics();
+        }
+
+        async function runLogAnalyzer() {
+            const res = await fetch('/api/analyze_logs', { method: 'POST' });
+            const data = await res.json();
+            
+            const dump = document.getElementById('rawLogDump');
+            dump.innerHTML = "";
+            data.raw_logs.forEach(line => {
+                dump.innerHTML += line + "\n";
+            });
+
+            const list = document.getElementById('logFindings');
+            list.innerHTML = "";
+            data.findings.forEach(str => {
+                const li = document.createElement('li');
+                li.innerText = str;
+                if (str.includes("🚨") || str.includes("🛑")) li.className = "text-rose-400 font-bold";
+                list.appendChild(li);
+            });
+            fetchMetrics();
+        }
+
+        async function runFileIntegrityCheck() {
+            const check = document.getElementById('tamperCheck').checked;
+            const res = await fetch('/api/check_integrity', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ tamper: check })
+            });
+            const data = await res.json();
+            
+            const statusUI = document.getElementById('hashStatus');
+            statusUI.innerText = data.status;
+            statusUI.className = check ? "font-bold text-rose-400 animate-pulse text-[10px] bg-rose-950/40 p-1 rounded border border-rose-900" : "font-bold text-emerald-400 text-[10px] bg-emerald-950/40 p-1 rounded border border-emerald-900";
+            
+            document.getElementById('hashBase').innerText = data.baseline;
+            document.getElementById('hashLive').innerText = data.current;
+            document.getElementById('hashExplanation').innerText = data.explanation;
+            fetchMetrics();
+        }
+    </script>
+</body>
+</html>
