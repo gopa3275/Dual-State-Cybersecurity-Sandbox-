@@ -13,15 +13,14 @@ The primary engine behavior depends entirely on the state of the Global Security
                                    / \
                                   /   \
                        [OFF / Vulnerable] [ON / Secure]
-                                /       \
-  +-----------------------------------+   +------------------------------------+
-  |  - No Request Rate Limiting       |   |  - Enforced Failure Tracking       |
-  |  - Direct Dynamic Code Reflection |   |  - Automatic 429 Lockout Timers    |
-  |  - Raw Malicious Input Execution  |   |  - Strict Context HTML Escaping    |
-  +-----------------------------------+   +------------------------------------+
+                                  
+   
+  - No Request Rate Limiting      |   |  - Enforced Failure Tracking       |
+  - Direct Dynamic Code Reflection|   |  - Automatic 429 Lockout Timers    |
+  - Raw Malicious Input Execution |   |  - Strict Context HTML Escaping    |
+  
 
- Features Implemented
-
+Features Implemented
 The suite consists of 6 core security modules mapping to real-world defensive engineering tools:
 
 01 // Password Strength & Entropy Analyzer
