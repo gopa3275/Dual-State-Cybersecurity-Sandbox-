@@ -44,21 +44,38 @@
         <aside class="w-64 bg-slate-950 border-r border-slate-800 p-4 flex flex-col gap-1.5 overflow-y-auto">
             <div class="text-[10px] font-bold tracking-widest uppercase text-slate-500 px-3 mb-2">Select a Security Tool</div>
             
-            <button onclick="switchTab('tab-pwd')" id="btn-tab-pwd" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 transition-all cursor-pointer">
+            <!-- 00 // Default Lab Overview Tab Button -->
+            <button onclick="switchTab('tab-welcome')" id="btn-tab-welcome" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 transition-all cursor-pointer flex items-center justify-between">
+                <span>00 // Lab Overview & Guide</span>
+                <span class="text-[9px] text-indigo-300 font-mono font-bold px-1.5 py-0.5 bg-indigo-500/20 rounded">START</span>
+            </button>
+
+            <!-- 01 // Password Strength Button -->
+            <button onclick="switchTab('tab-pwd')" id="btn-tab-pwd" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
                 01 // Password Strength Analyser
             </button>
+
+            <!-- 02 // Phishing Link Detector Button -->
             <button onclick="switchTab('tab-phish')" id="btn-tab-phish" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
                 02 // Phishing Link Detector
             </button>
+
+            <!-- 03 // XSS Sandbox Button -->
             <button onclick="switchTab('tab-xss')" id="btn-tab-xss" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
                 03 // XSS Injection Sandbox
             </button>
+
+            <!-- 04 // Brute Force Simulator Button -->
             <button onclick="switchTab('tab-brute')" id="btn-tab-brute" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
                 04 // Brute Force Simulator
             </button>
+
+            <!-- 05 // Log Analyzer Button -->
             <button onclick="switchTab('tab-logs')" id="btn-tab-logs" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
                 05 // Server Log Analyzer
             </button>
+
+            <!-- 06 // File Integrity Button -->
             <button onclick="switchTab('tab-integrity')" id="btn-tab-integrity" class="tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer">
                 06 // File Integrity Checker
             </button>
@@ -70,7 +87,13 @@
 
         <main class="flex-1 bg-slate-900 p-6 overflow-y-auto">
 
-            <div id="tab-pwd" class="tab-content space-y-6">
+            <!-- 00 // TAB: WELCOME OVERVIEW LANDING SCREEN (Default Open View) -->
+            <div id="tab-welcome" class="tab-content space-y-6">
+                {% include 'welcome.html' %}
+            </div>
+
+            <!-- 01 // TAB: PASSWORD STRENGTH -->
+            <div id="tab-pwd" class="tab-content hidden space-y-6">
                 <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
                     <h2 class="text-lg font-bold text-slate-100 mb-2">01 // Password Strength & Entropy Analyzer</h2>
                     <p class="text-xs text-slate-400 max-w-3xl mb-6">Tests how hard a password is to guess. It calculates mathematical entropy (randomness bits) and screens for weak patterns like sequential numbers or basic words.</p>
@@ -96,6 +119,7 @@
                 </div>
             </div>
 
+            <!-- 02 // TAB: PHISHING LINK SCANNER -->
             <div id="tab-phish" class="tab-content hidden space-y-6">
                 <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
                     <h2 class="text-lg font-bold text-slate-100 mb-2">02 // Phishing Link Scanner Tool</h2>
@@ -121,6 +145,7 @@
                 </div>
             </div>
 
+            <!-- 03 // TAB: XSS INJECTION -->
             <div id="tab-xss" class="tab-content hidden space-y-6">
                 <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
                     <h2 class="text-lg font-bold text-slate-100 mb-2">03 // Cross-Site Scripting (XSS) Vulnerability Lab</h2>
@@ -149,6 +174,7 @@
                 </div>
             </div>
 
+            <!-- 04 // TAB: BRUTE FORCE -->
             <div id="tab-brute" class="tab-content hidden space-y-6">
                 <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
                     <h2 class="text-lg font-bold text-slate-100 mb-2">04 // Automated Login Brute Force Simulator</h2>
@@ -182,6 +208,7 @@
                 </div>
             </div>
 
+            <!-- 05 // TAB: LOG ANALYZER -->
             <div id="tab-logs" class="tab-content hidden space-y-6">
                 <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
                     <h2 class="text-lg font-bold text-slate-100 mb-2">05 // Security Log Analyzer Platform</h2>
@@ -205,6 +232,7 @@
                 </div>
             </div>
 
+            <!-- 06 // TAB: FILE INTEGRITY -->
             <div id="tab-integrity" class="tab-content hidden space-y-6">
                 <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-xl">
                     <h2 class="text-lg font-bold text-slate-100 mb-2">06 // Cryptographic File Integrity Verification Utility</h2>
@@ -236,14 +264,20 @@
     <script>
         let isSecurityOn = false;
 
+        /* Unified Tab Navigation Switcher */
         function switchTab(targetId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(targetId).classList.remove('hidden');
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) targetEl.classList.remove('hidden');
             
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.className = "tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-900 transition-all cursor-pointer";
             });
-            document.getElementById(`btn-${targetId}`).className = "tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 transition-all cursor-pointer";
+            
+            const activeBtn = document.getElementById(`btn-${targetId}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 transition-all cursor-pointer flex items-center justify-between";
+            }
         }
 
         async function fetchMetrics() {
