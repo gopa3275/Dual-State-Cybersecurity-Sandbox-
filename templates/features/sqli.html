@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}SQL Injection Sandbox{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Module Header -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)]">
+    <h2 class="text-2xl font-bold text-[var(--text-color)]">01 // SQL Injection (SQLi) Exploit Sandbox</h2>
+    <p class="text-[var(--text-muted)] text-sm mt-1">Demonstrates OWASP #1 Vulnerability. In Vulnerable Mode, raw string concatenation allows attackers to bypass query logic using <code>' OR '1'='1</code>.</p>
+  </div>
+
+  <!-- Input Card -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+    <h3 class="text-lg font-semibold text-[var(--text-color)]">Username Input Vector</h3>
+    <div class="flex gap-3">
+      <input id="sqliInput" type="text" value="' OR '1'='1" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-amber-400 font-mono rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+      <button onclick="runSqliScanner(event)" class="px-4 py-2 bg-[var(--accent-color)] text-white text-sm rounded-lg font-medium hover:opacity-90 transition whitespace-nowrap">Execute Query</button>
+    </div>
+  </div>
+
+  <!-- Output Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Executed Query Card -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-3">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">Executed SQL Query</h3>
+      <div class="relative">
+        <div id="sqliQuery" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] break-all font-mono text-sm text-cyan-400 pr-10">Awaiting query input...</div>
+        <div class="absolute top-1 right-2">
+          <button onclick="copyToClipboard('sqliQuery')" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div id="sqliVerdict" class="text-sm font-bold"></div>
+    </div>
+
+    <!-- Database Records Card -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-3">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">Returned Database Records</h3>
+      <div class="relative">
+        <pre id="sqliResults" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] overflow-x-auto font-mono text-sm text-emerald-400 pr-10">[]</pre>
+        <div class="absolute top-1 right-2">
+          <button onclick="copyToClipboard('sqliResults')" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function runSqliScanner(event) {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Executing...';
+
+        const username = document.getElementById('sqliInput').value;
+        const verdictDiv = document.getElementById('sqliVerdict');
+        const queryDiv = document.getElementById('sqliQuery');
+        const resultsDiv = document.getElementById('sqliResults');
+
+        try {
+            const res = await fetch('/api/sqli_scan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username, security_on: isSecurityOn })
+            });
+            const data = await res.json();
+
+            queryDiv.innerText = data.query || "";
+            verdictDiv.innerText = data.verdict || data.message;
+            verdictDiv.className = isSecurityOn ? "text-sm font-bold text-emerald-400" : "text-sm font-bold text-rose-400";
+            resultsDiv.innerText = JSON.stringify(data.results || [], null, 2);
+            fetchMetrics();
+        } catch (error) {
+            verdictDiv.className = 'text-sm font-bold text-rose-400';
+            verdictDiv.innerText = `Error: Could not execute query. ${error.message}`;
+            queryDiv.innerText = 'N/A';
+            resultsDiv.innerText = '[]';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+</script>
+{% endblock %}

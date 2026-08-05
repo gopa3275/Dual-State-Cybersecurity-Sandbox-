@@ -20,35 +20,27 @@ The primary engine behavior depends entirely on the state of the Global Security
   - Raw Malicious Input Execution |   |  - Strict Context HTML Escaping    |
   
 
-Features Implemented
-The suite consists of 6 core security modules mapping to real-world defensive engineering tools:
+### Features Implemented
+The suite consists of multiple security modules mapping to real-world defensive engineering tools and OWASP Top 10 vulnerabilities:
 
-01 // Password Strength & Entropy Analyzer
-Computes real-time Shannon Entropy to evaluate mathematical password complexity and guards against simple dictionary sequences (e.g., admin123).
-Entropy Formula:
-$$H = -\sum_{i=1}^{n} p_i \log_2(p_i)$$
-Vulnerable State: Allows weak password entries with zero restriction, leaving users highly susceptible to automated credential guessing.
-Secure State: Quantifies password resistance and flags entropy deficiencies or bad patterns before processing.
+*   **SQL Injection (SQLi) Sandbox (01):** Demonstrates how attackers can bypass authentication or exfiltrate data by manipulating database queries. The secure mode uses parameterized queries (prepared statements) to neutralize the attack.
 
-02 // Phishing Link Detector
-A scanning engine that inspects candidate URLs for common malicious redirects and domain typosquatting tricks.
-IP Host Masking Detection: Flags raw IP structures bypassing DNS registration layers (e.g., http://192.168.2.14).
-Keyword Analysis: Identifies high-risk string parameters like secure-signin or update-banking commonly utilized in social-engineering vectors.
+*   **Cross-Site Scripting (XSS) Sandbox (02):** Shows how malicious scripts can be reflected from a web application to a user's browser. The secure mode uses contextual HTML entity encoding and a strict Content-Security-Policy (CSP) header to prevent script execution.
 
-03 // Reflected XSS Injection Sandbox
-Demonstrates client-side parameter injection vulnerabilities and the critical need for strict input sanitization.
-Vulnerable State: Reflects query input directly into the runtime web page DOM. Injected scripts execute natively within the target browser.
-Secure State: Filters input streams using contextual HTML entity encoding (mapping < to &lt; and > to &gt;), rendering arbitrary payloads completely harmless.
+*   **Password & Auth Audit (03 & 04):**
+    *   **Password Entropy:** Computes password strength based on character set size and length, providing real-time feedback on resistance to brute-force attacks.
+    *   **Brute-Force Simulator:** Simulates automated dictionary attacks. The secure mode employs an active failure-tracking matrix that returns an HTTP `429 Too Many Requests` and initiates an IP lockout after a set number of failed attempts.
 
-04 // Automated Login Brute Force Simulator
-Simulates automated dictionary attacks to contrast insecure authentication loops against proactive network firewall rules.
-Vulnerable State: Accepts infinite, rapid authentication attempts without enforcement delays.
-Secure State: Employs an active failure-tracking matrix. On the 3rd consecutive failed request, the engine returns an HTTP status code 429 Too Many Requests and initiates a 10-second system-wide IP lockout cooldown.
+*   **Phishing Link Scanner (05):** A heuristic engine that inspects URLs for common malicious patterns, including raw IP addresses, typosquatting keywords, and excessive subdomains.
 
-05 // Security Log Analyzer (SIEM Simulation)
-Parses raw syslog buffers to automate threat hunting and isolate anomalous malicious transaction signatures.
-Anomaly Identification: Automatically correlates multiple sequential 401 Unauthorized responses to flag brute-force loops and reports unauthorized 403 Forbidden folder traversals.
+*   **SIEM & Forensics (06):**
+    *   **Log Analyzer:** A SIEM simulation that parses raw HTTP logs to detect signatures of SQL injection, XSS, and path traversal attacks.
+    *   **File Integrity Checker:** Simulates a file integrity monitor by comparing the SHA-256 hash of a configuration file against a trusted baseline to detect unauthorized modifications.
 
-06 // Cryptographic File Integrity Checker
-Ensures critical server configuration files haven't been tampered with or modified by malware.
-Avalanche Effect Verification: Generates a real-time SHA-256 hash of active settings files and compares it to a trusted baseline. Even a 1-byte alteration breaks the checksum validation and triggers a critical integrity alarm.
+*   **Security Tools (07 & 08):** A utility suite for encoding/decoding common web payloads (Base64, URL, Hex) and generating SHA-256 hashes for arbitrary text strings.
+
+*   **Cross-Site Request Forgery (CSRF) Demo (09):** An interactive demo showing how an attacker can trick an authenticated user's browser into performing an unwanted action. The secure mode defends against this using a unique, synchronized token in the user's session and form data.
+
+*   **Server-Side Request Forgery (SSRF) Demo (10):** Demonstrates how an attacker can abuse server functionality to read internal data or interact with other backend systems. The secure mode mitigates this by validating requested URLs against a strict domain allowlist.
+
+*   **CTF Arena:** A "Capture The Flag" challenge space where users can submit flags they've discovered by successfully exploiting vulnerabilities in the other modules. Includes a hint system and progress tracking.

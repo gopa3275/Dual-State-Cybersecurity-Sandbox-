@@ -1,0 +1,13 @@
+<div class="nav-links">
+    {# Assumes a 'main' blueprint for the welcome page and 'ctf' for the CTF page #}
+    <a href="{{ url_for('welcome.index') }}" class="nav-tab {% if active_page == 'welcome' %}active{% endif %}">Welcome</a>
+    <a href="{{ url_for('sqli.sqli_page') }}" class="nav-tab {% if active_page == 'sqli' %}active{% endif %}">SQLi Sandbox</a>
+    <a href="{{ url_for('xss.xss_page') }}" class="nav-tab {% if active_page == 'xss' %}active{% endif %}">XSS Sandbox</a>
+    <a href="{{ url_for('auth.auth_page') }}" class="nav-tab {% if active_page == 'auth' %}active{% endif %}">Auth Audit</a>
+    <a href="{{ url_for('phishing.phishing_page') }}" class="nav-tab {% if active_page == 'phishing' %}active{% endif %}">Phishing Scanner</a>
+    <a href="{{ url_for('forensics.forensics_page') }}" class="nav-tab {% if active_page == 'forensics' %}active{% endif %}">SIEM Analyzer</a>
+    <a href="{{ url_for('tools.tools_page') }}" class="nav-tab {% if active_page == 'tools' %}active{% endif %}">Security Tools</a>
+    <a href="{{ url_for('ctf.ctf_page') }}" class="nav-tab {% if active_page == 'ctf' %}active{% endif %}">CTF Arena</a>
+    <a href="{{ url_for('csrf.csrf_page') }}" class="nav-tab {% if active_page == 'csrf' %}active{% endif %}">CSRF Demo</a>
+    <a href="{{ url_for('ssrf.ssrf_page') }}" class="nav-tab {% if active_page == 'ssrf' %}active{% endif %}">SSRF Demo</a>
+</div>

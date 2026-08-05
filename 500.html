@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Internal Server Error{% endblock %}
+
+{% block content %}
+<div class="glass-card p-8 md:p-12 rounded-xl border border-[var(--border-color)] mt-8 text-center">
+    <h1 class="text-6xl font-bold text-rose-500">500</h1>
+    <h2 class="text-3xl font-bold mt-4">Internal Server Error</h2>
+    <p class="text-[var(--text-muted)] mt-2">Something went wrong on our end. We are looking into it.</p>
+    <div class="mt-8">
+        <a href="{{ url_for('welcome.index') }}" class="px-6 py-3 bg-[var(--accent-color)] text-white font-semibold rounded-lg hover:opacity-90 transition-all">
+            Go to Homepage
+        </a>
+    </div>
+</div>
+{% endblock %}

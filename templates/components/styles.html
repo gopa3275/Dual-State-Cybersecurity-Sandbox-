@@ -1,0 +1,201 @@
+<!-- Load Google Web Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  /* 1. THEME DEFAULTS & MODERN DARK THEME */
+  :root, [data-theme="dark"] {
+    --font-heading: 'Inter', sans-serif;
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --bg-primary: #111827; /* Gray 900 */
+    --bg-secondary: #1f2937; /* Gray 800 */
+    --card-bg: rgba(31, 41, 55, 0.7);
+    --text-color: #f3f4f6; /* Gray 100 */
+    --text-muted: #9ca3af; /* Gray 400 */
+    --accent-color: #3b82f6; /* Blue 500 */
+    --border-color: rgba(255, 255, 255, 0.1);
+    
+    --bg-pattern: none;
+    --bg-pattern-size: auto;
+  }
+
+  /* 2. ARCTIC LIGHT THEME */
+  [data-theme="light"] {
+    --bg-primary: #f9fafb; /* Gray 50 */
+    --bg-secondary: #ffffff;
+    --card-bg: rgba(255, 255, 255, 0.7);
+    --text-color: #111827; /* Gray 900 */
+    --text-muted: #6b7280; /* Gray 500 */
+    --accent-color: #3b82f6; /* Blue 500 */
+    --border-color: rgba(0, 0, 0, 0.08);
+    --bg-pattern: none;
+    --bg-pattern-size: auto;
+  }
+
+  /* 3. CYBERPUNK NEON VIOLET THEME */
+  [data-theme="cyberpunk"] {
+    --bg-primary: #0d001a;
+    --bg-secondary: #1a0033;
+    --card-bg: rgba(26, 0, 51, 0.75);
+    --text-color: #f0abfc; /* Fuchsia 300 */
+    --text-muted: #a855f7; /* Purple 500 */
+    --accent-color: #00f0ff;
+    --border-color: rgba(240, 171, 252, 0.2);
+    --bg-pattern: 
+      linear-gradient(to right, rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+    --bg-pattern-size: 30px 30px;
+  }
+
+  /* 4. RETRO TERMINAL GREEN THEME */
+  [data-theme="green"] {
+    --bg-primary: #040a04;
+    --bg-secondary: #0a180a;
+    --card-bg: rgba(10, 24, 10, 0.7);
+    --text-color: #33ff33;
+    --text-muted: #22aa22;
+    --accent-color: #66ff66;
+    --border-color: rgba(51, 255, 51, 0.2);
+    
+    /* Scanline effect */
+    --bg-pattern: linear-gradient(rgba(0,0,0,0.3) 50%, transparent 50%);
+    --bg-pattern-size: 100% 3px;
+  }
+
+  /* Global Elements */
+  html[data-theme] body {
+    background-color: var(--bg-primary);
+    background-image: var(--bg-pattern);
+    background-size: var(--bg-pattern-size);
+    color: var(--text-color);
+    font-family: var(--font-sans);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    min-height: 100vh;
+  }
+
+  /* Apply Cyber Font to Headings & Brand Elements */
+  h1, h2, h3, h4, h5, h6, .brand-font {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+
+  /* Code / Input Monospace Font */
+  code, pre, textarea, input, .mono-font {
+    font-family: var(--font-mono) !important;
+    font-size: 0.9em;
+  }
+
+  /* Card Styling */
+  .glass-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 0.75rem;
+  }
+
+  /* Main Navbar */
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    /* Inherit glass-card styles */
+  }
+  .nav-brand {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-color);
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  /* Navigation Tabs */
+  .nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background-color: var(--card-bg);
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .nav-tab {
+    flex-grow: 1;
+    text-align: center;
+    padding: 0.6rem 0.5rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .nav-tab:hover {
+    background-color: var(--accent-color);
+    color: white;
+  }
+  .nav-tab.active {
+    background-color: var(--accent-color);
+    color: white;
+    box-shadow: 0 2px 10px -2px var(--accent-color);
+  }
+
+  /* Button & Badge Styles from navbar.html */
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    white-space: nowrap;
+  }
+  .badge-vuln {
+    background-color: #be123c; /* Rose 700 */
+    color: #fff;
+  }
+  .badge-secure {
+    background-color: #047857; /* Emerald 700 */
+    color: #fff;
+  }
+
+  /* Telemetry Flash Animations */
+  @keyframes flash-green {
+    0% { background-color: rgba(16, 185, 129, 0.3); }
+    100% { background-color: transparent; }
+  }
+  @keyframes flash-red {
+    0% { background-color: rgba(244, 63, 94, 0.3); }
+    100% { background-color: transparent; }
+  }
+  @keyframes flash-amber {
+    0% { background-color: rgba(245, 158, 11, 0.3); }
+    100% { background-color: transparent; }
+  }
+  .flash-green { animation: flash-green 0.7s ease-out; }
+  .flash-red { animation: flash-red 0.7s ease-out; }
+  .flash-amber { animation: flash-amber 0.7s ease-out; }
+
+  /* Terminal Action Icons Positioning (e.g., Copy/Trash) */
+  /* Assumes a parent container with position: relative; */
+  .terminal-actions {
+    position: absolute;
+    top: 0.5rem; /* Adjust as needed for padding from top */
+    right: 0.5rem; /* Adjust as needed for padding from right */
+    display: flex;
+    gap: 0.5rem; /* Space between icons */
+    z-index: 10; /* Ensure icons are above terminal content */
+  }
+</style>

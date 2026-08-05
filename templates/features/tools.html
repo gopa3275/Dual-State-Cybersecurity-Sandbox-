@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Module Header -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)]">
+    <h2 class="text-2xl font-bold text-[var(--text-color)]">07 & 08 // Security Tools & Utilities</h2>
+    <p class="text-[var(--text-muted)] text-sm mt-1">
+      Payload encoding/decoding and SHA-256 cryptographic file hashing integrity suite.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Payload Encoder Card -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">07 // Cyber Payload Encoder</h3>
+      
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Target Payload</label>
+        <input type="text" id="encoderInput" value="<script>alert('XSS')</script>" 
+               class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-color)] rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <button onclick="runTransform(event, 'base64_enc')" class="transform-btn w-full py-2 bg-[var(--accent-color)] text-white text-xs rounded-lg font-medium hover:opacity-90 transition">Encode Base64</button>
+        <button onclick="runTransform(event, 'url_enc')" class="transform-btn w-full py-2 bg-[var(--accent-color)] text-white text-xs rounded-lg font-medium hover:opacity-90 transition">Encode URL</button>
+        <button onclick="runTransform(event, 'hex_enc')" class="transform-btn w-full py-2 bg-[var(--accent-color)] text-white text-xs rounded-lg font-medium hover:opacity-90 transition">Encode Hex</button>
+        <button onclick="runTransform(event, 'base64_dec')" class="transform-btn w-full py-2 bg-[var(--bg-secondary)] text-[var(--text-color)] border border-[var(--border-color)] text-xs rounded-lg font-medium hover:bg-opacity-80 transition">Decode Base64</button>
+        <button onclick="runTransform(event, 'url_dec')" class="transform-btn w-full py-2 bg-[var(--bg-secondary)] text-[var(--text-color)] border border-[var(--border-color)] text-xs rounded-lg font-medium hover:bg-opacity-80 transition">Decode URL</button>
+        <button onclick="runTransform(event, 'hex_dec')" class="transform-btn w-full py-2 bg-[var(--bg-secondary)] text-[var(--text-color)] border border-[var(--border-color)] text-xs rounded-lg font-medium hover:bg-opacity-80 transition">Decode Hex</button>
+      </div>
+
+      <div class="relative">
+        <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Output</label>
+        <div id="encoderResult" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-emerald-400 font-mono text-sm p-3 rounded-lg min-h-[48px] break-all pr-10">
+          Select transformation format above...
+        </div>
+        <div class="absolute top-8 right-2">
+          <button onclick="copyToClipboard('encoderResult')" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHA-256 File Integrity Card -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">08 // SHA-256 Hash Generator</h3>
+      
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Input String</label>
+        <textarea id="hashInput" rows="3" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-color)] rounded-lg p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">Enterprise Security Audit Standard v3.0</textarea>
+      </div>
+
+      <button onclick="generateHash(event)" class="w-full py-2.5 bg-[var(--accent-color)] text-white text-sm rounded-lg font-medium hover:opacity-90 transition">
+        Generate SHA-256 Hash
+      </button>
+
+      <div class="relative">
+        <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Cryptographic Hash</label>
+        <div id="hashResult" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-cyan-400 font-mono text-xs p-3 rounded-lg min-h-[48px] break-all pr-10">
+          Awaiting input execution...
+        </div>
+        <div class="absolute top-8 right-2">
+          <button onclick="copyToClipboard('hashResult')" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+async function runTransform(event, mode) {
+  const transformBtns = document.querySelectorAll('.transform-btn');
+  transformBtns.forEach(b => b.disabled = true);
+  
+  // Highlight the clicked button
+  const clickedBtn = event.target;
+  clickedBtn.innerHTML = '...'; // Simple loading state
+
+  const text = document.getElementById('encoderInput').value;
+  const resultDiv = document.getElementById('encoderResult');
+
+  try {
+    const res = await fetch('/api/tools/encode', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text, mode })
+    });
+    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    const data = await res.json();
+    resultDiv.className = resultDiv.className.replace('text-rose-400', 'text-emerald-400');
+    resultDiv.innerText = data.result || 'Error performing transformation';
+  } catch (error) {
+    resultDiv.className = resultDiv.className.replace('text-emerald-400', 'text-rose-400');
+    resultDiv.innerText = `Error: ${error.message}`;
+  } finally {
+    transformBtns.forEach(b => b.disabled = false);
+    // Restore original text for all buttons by finding them again
+    document.querySelector('[onclick*="base64_enc"]').innerHTML = 'Encode Base64';
+    document.querySelector('[onclick*="url_enc"]').innerHTML = 'Encode URL';
+    document.querySelector('[onclick*="hex_enc"]').innerHTML = 'Encode Hex';
+    document.querySelector('[onclick*="base64_dec"]').innerHTML = 'Decode Base64';
+    document.querySelector('[onclick*="url_dec"]').innerHTML = 'Decode URL';
+    document.querySelector('[onclick*="hex_dec"]').innerHTML = 'Decode Hex';
+  }
+}
+
+async function generateHash(event) {
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Generating...';
+
+  const text = document.getElementById('hashInput').value;
+  const resultDiv = document.getElementById('hashResult');
+
+  try {
+    const res = await fetch('/api/tools/hash', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text })
+    });
+    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    const data = await res.json();
+    resultDiv.innerText = data.hash || 'Error computing SHA-256';
+  } catch (error) {
+    resultDiv.innerText = `Error: ${error.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
+</script>
+{% endblock %}

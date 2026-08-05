@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Module Header -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)]">
+    <h2 class="text-2xl font-bold text-[var(--text-color)]">09 // Cross-Site Request Forgery (CSRF)</h2>
+    <p class="text-[var(--text-muted)] text-sm mt-1">
+      Demonstrates how attackers can trick an authenticated user's browser into sending unwanted requests.
+    </p>
+  </div>
+
+  <!-- Flashed Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        {% set color = 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' if category == 'success' else 'bg-rose-500/20 border-rose-500/30 text-rose-300' if category == 'danger' else 'bg-sky-500/20 border-sky-500/30 text-sky-300' %}
+        <div class="relative">
+          <div id="flash-message-{{ loop.index }}" class="{{ color }} p-4 rounded-lg border text-sm font-medium pr-10">{{ message }}</div>
+          <button onclick="copyToClipboard('flash-message-{{ loop.index }}')" title="Copy to Clipboard" class="absolute top-1/2 -translate-y-1/2 right-2 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+          </button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Legitimate Action Card -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">User Profile Settings</h3>
+      <p class="text-sm text-[var(--text-muted)]">Your current email is: <strong class="text-[var(--text-color)]">{{ current_email }}</strong></p>
+      
+      <form method="POST" action="{{ url_for('csrf.csrf_page') }}" class="space-y-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div>
+          <label for="email" class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">New Email Address</label>
+          <input type="email" name="email" id="email" value="new.user@example.com" required class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-color)] rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-[var(--accent-color)] text-white text-sm rounded-lg font-medium hover:opacity-90 transition">
+          Update Email
+        </button>
+      </form>
+    </div>
+
+    <!-- Attacker Simulation Card -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">CSRF Attack Simulation</h3>
+      <p class="text-sm text-[var(--text-muted)]">
+        This simulates visiting a malicious website while you are logged into this one. The attacker's site contains a hidden form that tries to change your email without your consent.
+      </p>
+      <ul class="text-sm text-[var(--text-muted)] list-disc list-inside space-y-1">
+        <li>In <strong class="text-rose-400">Vulnerable Mode</strong>, the attack will succeed because no CSRF token is validated.</li>
+        <li>In <strong class="text-emerald-400">Secure Mode</strong>, the attack will be blocked because the malicious form cannot provide the secret token.</li>
+      </ul>
+      <div class="pt-2">
+        <a href="{{ url_for('csrf.attacker_page') }}" target="_blank" class="w-full block text-center py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-lg transition">
+          Visit "Malicious" Page
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

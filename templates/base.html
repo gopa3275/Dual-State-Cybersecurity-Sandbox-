@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CyberSandbox Studio{% endblock %}</title>
+    
+    <!-- Tailwind CSS (via CDN for simplicity in this example) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Shared Styles & Fonts -->
+    {% include 'components/styles.html' %}
+</head>
+<body class="bg-[var(--bg-primary)] text-[var(--text-color)] font-sans transition-colors duration-300">
+
+    <div class="container mx-auto p-4 max-w-7xl">
+        <!-- Sticky Header with Navbar & Telemetry -->
+        <header class="sticky top-4 z-50 mb-4">
+            {% include 'components/navbar.html' %}
+        </header>
+
+        <!-- Feature Navigation Tabs -->
+        {% include 'components/nav_tabs.html' %}
+
+        <!-- Main Content Area -->
+        <main class="mt-4">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Global Scripts -->
+    <script>
+        let isSecurityOn = false; // Default to VULNERABLE
+        let currentMetrics = { attacks_blocked: 0, flaws_exploited: 0, threats_spotted: 0 };
+        const themeIcons = {
+            dark: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>`,
+            light: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 100 2h1z" clip-rule="evenodd" /></svg>`,
+            textured: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>`
+        };
+
+        function updateThemeButton(theme) {
+            const btn = document.getElementById('themeToggleBtn');
+            if (!btn) return;
+            // The icon shown should represent the *next* theme in the cycle
+            if (theme === 'dark') btn.innerHTML = themeIcons.light; // next is light
+            else if (theme === 'light') btn.innerHTML = themeIcons.textured; // next is textured
+            else btn.innerHTML = themeIcons.dark; // next is dark
+        }
+
+        // Theme Switching Logic
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme') || 'dark';
+            let nextTheme = 'light';
+            if (currentTheme === 'light') nextTheme = 'textured';
+            else if (currentTheme === 'textured') nextTheme = 'dark';
+            
+            html.setAttribute('data-theme', nextTheme);
+            localStorage.setItem('theme', nextTheme);
+            updateThemeButton(nextTheme);
+
+            // Synchronize with Tailwind's dark mode class
+            if (nextTheme === 'light') {
+                html.classList.remove('dark');
+            } else {
+                html.classList.add('dark');
+            }
+        }
+
+        // Security Mode Toggle Logic
+        async function toggleSecurityMode() {
+            const res = await fetch('/api/security_mode', { method: 'POST' });
+            const data = await res.json();
+            isSecurityOn = data.security_mode;
+            updateSecurityButton();
+        }
+
+        function updateSecurityButton() {
+            const btn = document.getElementById('secToggleBtn');
+            const icon = document.getElementById('secIcon');
+            const text = document.getElementById('secText');
+            if (!btn || !icon || !text) return;
+
+            const lockedIcon = `<path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />`;
+            const unlockedIcon = `<path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.905 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" />`;
+
+            if (isSecurityOn) {
+                btn.className = 'btn badge-secure flex items-center gap-2';
+                icon.innerHTML = lockedIcon;
+                text.textContent = 'Secure';
+            } else {
+                btn.className = 'btn badge-vuln flex items-center gap-2';
+                icon.innerHTML = unlockedIcon;
+                text.textContent = 'Vulnerable';
+            }
+        }
+        
+        // Fetch and update telemetry counters
+        async function fetchMetrics() {
+            try {
+                const res = await fetch('/api/metrics');
+                if (!res.ok) throw new Error(`API Error: ${res.status}`);
+                const data = await res.json();
+
+                const blockedEl = document.getElementById('attacks_blocked');
+                const exploitedEl = document.getElementById('flaws_exploited');
+                const spottedEl = document.getElementById('threats_spotted');
+
+                // Update and flash if value increased
+                if (data.attacks_blocked > currentMetrics.attacks_blocked) {
+                    blockedEl.parentElement.classList.remove('flash-green');
+                    void blockedEl.offsetWidth; // Trigger reflow to restart animation
+                    blockedEl.parentElement.classList.add('flash-green');
+                }
+                if (data.flaws_exploited > currentMetrics.flaws_exploited) {
+                    exploitedEl.parentElement.classList.remove('flash-red');
+                    void exploitedEl.offsetWidth;
+                    exploitedEl.parentElement.classList.add('flash-red');
+                }
+                if (data.threats_spotted > currentMetrics.threats_spotted) {
+                    spottedEl.parentElement.classList.remove('flash-amber');
+                    void spottedEl.offsetWidth;
+                    spottedEl.parentElement.classList.add('flash-amber');
+                }
+
+                blockedEl.textContent = data.attacks_blocked || 0;
+                exploitedEl.textContent = data.flaws_exploited || 0;
+                spottedEl.textContent = data.threats_spotted || 0;
+
+                // Store new values for next comparison
+                currentMetrics = data;
+            } catch (error) {
+                console.error("Failed to fetch metrics:", error);
+            }
+        }
+
+        // Reset All Progress
+        async function resetAllProgress() {
+            if (!confirm("Are you sure you want to reset all progress? This will clear your entire session, including telemetry, captured flags, and security mode.")) {
+                return;
+            }
+            try {
+                const res = await fetch('/api/reset_all', { method: 'POST' });
+                if (res.ok) {
+                    // Reload the page for a completely fresh start
+                    window.location.reload();
+                } else {
+                    alert('Failed to reset progress. Please try again.');
+                }
+            } catch (error) {
+                alert(`An error occurred: ${error.message}`);
+            }
+        }
+
+        // Global utility to copy text from an element
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => console.log('Copied!'), () => console.error('Copy failed'));
+        }
+
+        // Initial state setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Synchronize with Tailwind's dark mode class on initial load
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+            updateThemeButton(savedTheme);
+
+            fetch('/api/security_mode').then(res => res.json()).then(data => {
+                isSecurityOn = data.security_mode;
+                updateSecurityButton();
+            });
+            fetchMetrics();
+        });
+    </script>
+
+    <!-- Page-specific Scripts -->
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

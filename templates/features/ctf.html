@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-[var(--text-color)]">🏆 CTF Flag Arena</h2>
+      <p class="text-[var(--text-muted)] text-sm mt-1">Submit flags captured across SQLi, XSS, and Authentication challenges.</p>
+    </div>
+    <div id="ctfProgress" class="px-4 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-lg text-sm font-semibold">
+      3 FLAGS AVAILABLE
+    </div>
+  </div>
+
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4 max-w-xl">
+    <h3 class="text-lg font-semibold text-[var(--text-color)]">Submit Flag</h3>
+    <div>
+      <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Flag Format: FLAG{...}</label>
+      <input type="text" id="flagInput" placeholder="FLAG{example_flag_here}" 
+             class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-color)] rounded-lg p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+    </div>
+    <button onclick="submitFlag(event)" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-lg transition">
+      Verify Flag Submission
+    </button>
+    <div id="ctfStatus" class="text-sm font-medium pt-2 text-[var(--text-muted)]">Awaiting flag submission...</div>
+  </div>
+
+  <!-- New Hint System Card -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4 max-w-xl mt-6">
+    <h3 class="text-lg font-semibold text-[var(--text-color)]">Request a Hint</h3>
+    <p class="text-sm text-[var(--text-muted)]">Stuck on a challenge? Select one and request a hint. This will count as a "Threat Spotted" on your dashboard.</p>
+    <div class="flex gap-3">
+        <select id="hintChallengeSelect" class="flex-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-color)] rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+            <option value="">-- Select a Challenge --</option>
+            <option value="sqli_challenge">SQLi Challenge</option>
+            <option value="xss_challenge">XSS Challenge</option>
+            <option value="entropy_challenge">Password Entropy Challenge</option>
+        </select>
+        <button onclick="getHint(event)" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-sm rounded-lg font-medium transition whitespace-nowrap">Get Hint</button>
+    </div>
+    <div class="relative">
+      <div id="hintResult" class="text-sm text-sky-300 pt-2 font-mono pr-10" style="display: none;"></div>
+      <button id="hintCopyBtn" onclick="copyToClipboard('hintResult')" title="Copy to Clipboard" class="absolute top-2 right-0 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Reset Progress Card -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4 max-w-xl mt-6">
+    <h3 class="text-lg font-semibold text-[var(--text-color)]">Reset Progress</h3>
+    <p class="text-sm text-[var(--text-muted)]">This will clear all your captured flags and reset your telemetry scores. This action cannot be undone.</p>
+    <button onclick="resetProgress(event)" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-lg transition">
+      Reset All Progress
+    </button>
+    <div id="resetStatus" class="text-sm font-medium pt-2" style="display: none;"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function submitFlag(event) {
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Verifying...';
+
+  const flag = document.getElementById('flagInput').value;
+  const statusDiv = document.getElementById('ctfStatus');
+  
+  try {
+    const res = await fetch('/api/ctf/verify', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ flag })
+    });
+    
+    const data = await res.json();
+    if (res.ok && data.success) {
+      statusDiv.className = 'text-emerald-400 font-medium pt-2';
+      statusDiv.innerText = data.message;
+      fetchMetrics();
+      updateCtfStatus(); // Update the progress counter
+    } else {
+      statusDiv.className = 'text-rose-400 font-medium pt-2';
+      statusDiv.innerText = data.message || '❌ Invalid Flag! Try again.';
+    }
+  } catch (error) {
+    statusDiv.className = 'text-rose-400 font-medium pt-2';
+    statusDiv.innerText = `Error: Could not verify flag. ${error.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
+
+async function updateCtfStatus() {
+  try {
+    const res = await fetch('/api/ctf/status');
+    if (!res.ok) return;
+    const data = await res.json();
+    const progressDiv = document.getElementById('ctfProgress');
+    progressDiv.textContent = `${data.captured_count} / ${data.total_flags} FLAGS CAPTURED`;
+  } catch (error) {
+    console.error("Could not update CTF status:", error);
+  }
+}
+
+async function getHint(event) {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '...';
+
+    const challengeId = document.getElementById('hintChallengeSelect').value;
+    const hintDiv = document.getElementById('hintResult');
+    const copyBtn = document.getElementById('hintCopyBtn');
+
+    if (!challengeId) {
+        hintDiv.style.display = 'block';
+        copyBtn.style.display = 'none';
+        hintDiv.className = 'text-sm text-rose-400 pt-2 font-mono pr-10';
+        hintDiv.innerText = 'Please select a challenge first.';
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/ctf/hint', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ challenge_id: challengeId })
+        });
+        const data = await res.json();
+        hintDiv.style.display = 'block';
+
+        if (res.ok) {
+            copyBtn.style.display = 'block';
+            hintDiv.className = 'text-sm text-sky-300 pt-2 font-mono pr-10';
+            hintDiv.innerText = data.hint;
+            fetchMetrics(); // Update telemetry for hint usage
+        } else {
+            copyBtn.style.display = 'none';
+            hintDiv.className = 'text-sm text-rose-400 pt-2 font-mono pr-10';
+            hintDiv.innerText = data.hint || 'An error occurred.';
+        }
+    } catch (error) {
+        hintDiv.style.display = 'block';
+        copyBtn.style.display = 'none';
+        hintDiv.className = 'text-sm text-rose-400 pt-2 font-mono pr-10';
+        hintDiv.innerText = `Error: Could not fetch hint. ${error.message}`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function resetProgress(event) {
+    if (!confirm("Are you sure you want to reset all your CTF progress and telemetry scores? This cannot be undone.")) {
+        return;
+    }
+
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Resetting...';
+
+    const statusDiv = document.getElementById('resetStatus');
+
+    try {
+        const res = await fetch('/api/ctf/reset', { method: 'POST' });
+        const data = await res.json();
+        
+        statusDiv.style.display = 'block';
+        if (res.ok) {
+            statusDiv.className = 'text-sm font-medium pt-2 text-emerald-400';
+            statusDiv.innerText = data.message;
+            // Refresh UI
+            updateCtfStatus();
+            fetchMetrics();
+        } else {
+            statusDiv.className = 'text-sm font-medium pt-2 text-rose-400';
+            statusDiv.innerText = data.message || 'Failed to reset progress.';
+        }
+    } catch (error) {
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'text-sm font-medium pt-2 text-rose-400';
+        statusDiv.innerText = `Error: ${error.message}`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', updateCtfStatus);
+</script>
+{% endblock %}

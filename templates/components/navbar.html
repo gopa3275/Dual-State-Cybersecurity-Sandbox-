@@ -1,0 +1,149 @@
+<nav class="navbar glass-card">
+    <div class="nav-brand">🛡️ CyberSandbox Studio</div>
+
+    <!-- Telemetry Dashboard (hidden on small screens) -->
+    <div id="telemetry-bar" class="hidden lg:flex gap-3 text-center">
+        <div class="px-4 py-1.5">
+            <div class="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">Blocked</div>
+            <div id="attacks_blocked" class="text-xl font-bold font-mono text-emerald-400 leading-tight">0</div>
+        </div>
+        <div class="px-4 py-1.5">
+            <div class="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">Exploited</div>
+            <div id="flaws_exploited" class="text-xl font-bold font-mono text-rose-400 leading-tight">0</div>
+        </div>
+        <div class="px-4 py-1.5">
+            <div class="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">Threats</div>
+            <div id="threats_spotted" class="text-xl font-bold font-mono text-amber-400 leading-tight">0</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <!-- Global Security Toggle -->
+        <button id="secToggleBtn" class="btn badge-vuln flex items-center gap-2 h-9 rounded-lg"> 
+            <svg id="secIcon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.905 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" />
+            </svg>
+            <span id="secText">Vulnerable</span>
+        </button>
+        <!-- Theme Toggle Dropdown -->
+        <div class="flex items-center gap-2 text-xs h-9">
+            <label for="themeSelect" class="text-[var(--text-muted)]">🎨 </label>
+            <select id="themeSelect" class="bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-color)] rounded-lg py-1.5 pl-2 pr-7 focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)] appearance-none" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%2394a3b8%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201 0 010-1.414z%22%20clip-rule%3D%22evenodd%22%20%2F%3E%3C%2Fsvg%3E'); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1em 1em;">
+                <option value="dark">Modern Dark</option>
+                <option value="light">Arctic Light</option>
+                <option value="cyberpunk">Cyberpunk</option>
+                <option value="green">Terminal Green</option>
+            </select>
+        </div>
+        <!-- Reset All Progress Button -->
+        <button id="resetBtn" title="Reset All Progress" class="btn p-2.5 leading-none bg-rose-600/20 text-rose-400 hover:bg-rose-600/40 h-9 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
+        </button>
+    </div>
+</nav>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() { // Ensure script runs after DOM is fully loaded
+    // --- Theme Switcher Logic ---
+    const themeSelectEl = document.getElementById('themeSelect'); // Can be null if element doesn't exist
+    const themeKey = 'theme';
+    // Get themes from the select options themselves to stay in sync
+    const themes = Array.from(themeSelectEl.options).map(opt => opt.value);
+  
+    function applyTheme(theme) {
+      // Default to 'dark' if the theme from localStorage is invalid
+      const validTheme = themes.includes(theme) ? theme : 'dark';
+      
+      document.documentElement.setAttribute('data-theme', validTheme);
+      localStorage.setItem(themeKey, validTheme);
+      
+      // Sync the dropdown with the applied theme
+      if (themeSelectEl) {
+        themeSelectEl.value = validTheme;
+      }
+    }
+  
+    // Add event listener for when the user changes the dropdown
+    if (themeSelectEl) {
+        themeSelectEl.addEventListener('change', (event) => {
+            applyTheme(event.target.value);
+        });
+    }
+  
+    // Apply theme on initial load to prevent FOUC (Flash of Unstyled Content)
+    const savedTheme = localStorage.getItem(themeKey);
+    applyTheme(savedTheme || 'dark');
+  
+    // --- Telemetry Functions ---
+    // Function to fetch and update telemetry metrics (made global for other modules)
+    window.fetchMetrics = async function() {
+        try {
+            const response = await fetch('/api/metrics');
+            if (!response.ok) throw new Error('Network response was not ok.');
+            const data = await response.json();
+            document.getElementById('attacks_blocked').textContent = data.attacks_blocked;
+            document.getElementById('flaws_exploited').textContent = data.flaws_exploited;
+            document.getElementById('threats_spotted').textContent = data.threats_spotted;
+        } catch (error) {
+            console.error('Failed to fetch metrics:', error);
+        }
+    }
+  
+    // --- Unobtrusive Event Listeners & Global Functions ---
+    const secToggleBtn = document.getElementById('secToggleBtn');
+    const resetBtn = document.getElementById('resetBtn');
+  
+    if (secToggleBtn) {
+        secToggleBtn.addEventListener('click', toggleSecurityMode);
+    }
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetAllProgress);
+    }
+  
+    async function toggleSecurityMode() {
+        try {
+            const response = await fetch('/api/security_mode', { method: 'POST' });
+            if (!response.ok) throw new Error('Network response was not ok.');
+            const data = await response.json();
+            updateSecurityButtonUI(data.security_mode);
+            window.fetchMetrics(); // Update telemetry after security mode changes
+        } catch (error) {
+            console.error('Failed to toggle security mode:', error);
+        }
+    }
+  
+    async function resetAllProgress() {
+        if (confirm('Are you sure you want to reset all progress? This will clear all telemetry and CTF flags.')) {
+            try {
+                await fetch('/api/reset_all', { method: 'POST' });
+                window.location.reload();
+            } catch (error) {
+                console.error('Failed to reset progress:', error);
+            }
+        }
+    }
+  
+    function updateSecurityButtonUI(isSecure) {
+        const secToggleBtn = document.getElementById('secToggleBtn');
+        const secText = document.getElementById('secText');
+        const secIcon = document.getElementById('secIcon');
+        const unlocked_path = "M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.905 1 1 0 001.937-.5A5.002 5.002 0 0010 2z";
+        const locked_path = "M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z";
+  
+        if (isSecure) {
+            secText.textContent = 'Secure';
+            secToggleBtn.classList.remove('badge-vuln');
+            secToggleBtn.classList.add('badge-secure');
+            secIcon.innerHTML = `<path fill-rule="evenodd" clip-rule="evenodd" d="${locked_path}" />`;
+        } else {
+            secText.textContent = 'Vulnerable';
+            secToggleBtn.classList.remove('badge-secure');
+            secToggleBtn.classList.add('badge-vuln');
+            secIcon.innerHTML = `<path d="${unlocked_path}" />`;
+        }
+    }
+  
+    // Sync security button UI on initial page load
+    fetch('/api/security_mode').then(res => res.json()).then(data => updateSecurityButtonUI(data.security_mode));
+  });
+</script>
