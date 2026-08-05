@@ -1,0 +1,132 @@
+<div id="tool-welcome" class="space-y-6">
+    
+    <!-- Hero Banner -->
+    <div class="bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 md:p-8 relative overflow-hidden shadow-xl">
+        <div class="relative z-10 max-w-3xl space-y-3">
+            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full text-xs font-bold font-mono tracking-wider uppercase">
+                🛡️ Interactive Security Lab Overview
+            </span>
+            <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                Welcome to the Dual-State Cybersecurity Sandbox
+            </h2>
+            <p class="text-slate-300 text-sm leading-relaxed font-normal">
+                This platform is an interactive web security testing suite designed to demonstrate OWASP web vulnerabilities and their corresponding server-side defensive protections in real time.
+            </p>
+        </div>
+        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-6 space-y-4">
+        <div class="flex items-center space-x-2">
+            <span class="text-indigo-400 font-mono text-sm font-bold">// KEY MECHANISM</span>
+            <h3 class="text-lg font-bold text-white">How the Dual-State Engine Works</h3>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+            At the top right of your screen, locate the <strong class="text-emerald-400 font-mono">SECURITY PROTECTION SWITCH</strong>. Toggling this global switch dynamically changes how backend server middleware handles incoming requests:
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <!-- Off State Card -->
+            <div class="bg-rose-950/20 border border-rose-900/40 rounded-lg p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-rose-400 font-mono">STATE: VULNERABLE (OFF)</span>
+                    <span class="px-2 py-0.5 bg-rose-500/20 text-rose-300 rounded text-[10px] font-bold font-mono">OFFENSIVE MODE</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Protective filters and rate limiters are disabled. Exploit payloads (like XSS scripts or brute-force automation) execute directly, demonstrating unfiltered vulnerability exposure.
+                </p>
+            </div>
+
+            <!-- On State Card -->
+            <div class="bg-emerald-950/20 border border-emerald-900/40 rounded-lg p-4 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-emerald-400 font-mono">STATE: SECURE (ON)</span>
+                    <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-bold font-mono">DEFENSIVE MODE</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Active defensive middleware sanitizes inputs (HTML entity escaping), enforces IP rate-limiting, and triggers account lockout timers upon consecutive failure thresholds.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <h3 class="text-sm font-bold text-indigo-400 uppercase tracking-widest font-mono">// Available Tools & Lab Modules</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <!-- Tool 01 -->
+            <div class="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-4 transition-all space-y-2 flex flex-col justify-between cursor-pointer" onclick="switchTool('password')">
+                <div>
+                    <div class="text-indigo-400 font-mono text-xs font-bold mb-1">01 // Password Audit</div>
+                    <h4 class="text-sm font-bold text-white">Password Entropy & Strength</h4>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Evaluates bitwise Shannon entropy and checks inputs against common dictionary attack lists.
+                    </p>
+                </div>
+                <span class="text-[11px] text-slate-500 font-mono pt-2 border-t border-slate-800">Entropy Calculation • Wordlist Audit</span>
+            </div>
+
+            <!-- Tool 02 -->
+            <div class="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-4 transition-all space-y-2 flex flex-col justify-between cursor-pointer" onclick="switchTool('phishing')">
+                <div>
+                    <div class="text-indigo-400 font-mono text-xs font-bold mb-1">02 // Link Heuristics</div>
+                    <h4 class="text-sm font-bold text-white">Phishing Link Detector</h4>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Scans target URLs for IP host masking, suspicious TLDs, and typosquatting keywords.
+                    </p>
+                </div>
+                <span class="text-[11px] text-slate-500 font-mono pt-2 border-t border-slate-800">Heuristic Analysis • Domain Screening</span>
+            </div>
+
+            <!-- Tool 03 -->
+            <div class="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-4 transition-all space-y-2 flex flex-col justify-between cursor-pointer" onclick="switchTool('xss')">
+                <div>
+                    <div class="text-indigo-400 font-mono text-xs font-bold mb-1">03 // XSS Sandbox</div>
+                    <h4 class="text-sm font-bold text-white">Reflected XSS Execution</h4>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Tests script reflection vs. html entity escaping (`&lt;script&gt;` payload neutralization).
+                    </p>
+                </div>
+                <span class="text-[11px] text-slate-500 font-mono pt-2 border-t border-slate-800">OWASP Top 10 • Input Sanitization</span>
+            </div>
+
+            <!-- Tool 04 -->
+            <div class="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-4 transition-all space-y-2 flex flex-col justify-between cursor-pointer" onclick="switchTool('brute')">
+                <div>
+                    <div class="text-indigo-400 font-mono text-xs font-bold mb-1">04 // Auth Lab</div>
+                    <h4 class="text-sm font-bold text-white">Brute Force Simulator</h4>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Simulates rapid automated dictionary attacks and demonstrates 3-strike rate-limiting lockouts.
+                    </p>
+                </div>
+                <span class="text-[11px] text-slate-500 font-mono pt-2 border-t border-slate-800">Rate Limiting • HTTP 429 Lockouts</span>
+            </div>
+
+            <!-- Tool 05 -->
+            <div class="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-4 transition-all space-y-2 flex flex-col justify-between cursor-pointer" onclick="switchTool('logs')">
+                <div>
+                    <div class="text-indigo-400 font-mono text-xs font-bold mb-1">05 // SIEM Forensic</div>
+                    <h4 class="text-sm font-bold text-white">Security Log Analyzer</h4>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Parses server HTTP syslogs to isolate brute-force IP streams and forbidden path traversal attempts.
+                    </p>
+                </div>
+                <span class="text-[11px] text-slate-500 font-mono pt-2 border-t border-slate-800">Syslog Auditing • Anomaly Isolation</span>
+            </div>
+
+            <!-- Tool 06 -->
+            <div class="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-4 transition-all space-y-2 flex flex-col justify-between cursor-pointer" onclick="switchTool('integrity')">
+                <div>
+                    <div class="text-indigo-400 font-mono text-xs font-bold mb-1">06 // Auditing</div>
+                    <h4 class="text-sm font-bold text-white">SHA-256 File Integrity</h4>
+                    <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                        Calculates cryptographic checksum hashes to detect unauthorized configuration file tampering.
+                    </p>
+                </div>
+                <span class="text-[11px] text-slate-500 font-mono pt-2 border-t border-slate-800">Cryptographic Checksum • Tamper Alarm</span>
+            </div>
+
+        </div>
+    </div>
+</div>
