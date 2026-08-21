@@ -89,26 +89,55 @@ async function runBruteForceSim(event) {
   btn.innerHTML = 'Simulating...';
 
   const bruteResult = document.getElementById('bruteResult');
-  const isSecure = document.getElementById('secToggleBtn')?.textContent.includes('SECURE');
-  bruteResult.innerText = 'Sending login attempt...';
-  
+  const attackQueue = isSecurityOn
+    ? ['password', 'admin123', 'letmein']
+    : ['password', 'admin123', 'letmein', 'password123'];
+
+  bruteResult.innerText = 'Sending login attempt sequence...';
+
   try {
-    const res = await fetch('/api/brute_login', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ username: 'test_user', password: 'wrong_password', security_on: isSecure })
-    });
-    // We don't need to check res.ok here because 429 is an expected "error" state
-    const data = await res.json();
-    
-    bruteResult.className = `w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all ${res.status === 429 ? 'text-rose-400' : 'text-amber-400'}`;
-    bruteResult.innerText = data.message;
-    if (data.telemetry) {
+    let triedPasswords = [];
+    let data = null;
+
+    for (const password of attackQueue) {
+      const res = await fetch('/api/brute_login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username: 'test_user', password, security_on: isSecurityOn })
+      });
+      data = await res.json();
+      triedPasswords.push(password);
+
+      if ((data.status === 'vulnerable' && data.compromised === true) || (data.status === 'secure' && data.blocked === true)) {
+        break;
+      }
+    }
+
+    const isCompromised = data && (data.status === 'vulnerable' || data.compromised === true);
+    bruteResult.className = `w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all ${isCompromised ? 'text-rose-400' : 'text-emerald-400'}`;
+
+    if (isCompromised) {
+      bruteResult.innerHTML = `
+        <span class="font-bold text-rose-400">[EXPLOITED]</span><br>
+        <strong>Attempted Passwords:</strong><br>
+        ${triedPasswords.map(p => `- ${p}`).join('<br>')}<br>
+        <strong>Cracked Password:</strong> ${data.cracked_password || 'password123'}
+      `;
+    } else {
+      bruteResult.innerHTML = `
+        <span class="font-bold text-emerald-400">[DEFENSE TRIGGERED]</span><br>
+        <strong>Result:</strong> ${data.message}<br>
+        <strong>Attempted:</strong> ${data.attempts_count || 3}/3<br>
+        <strong>Mitigation:</strong> Exponential Backoff / Account Lockout
+      `;
+    }
+
+    if (data && data.telemetry) {
       applyTelemetryPayload(data.telemetry);
     } else {
       fetchMetrics();
     }
-    appendLiveLog(`Auth brute force: ${data.message}`);
+    appendLiveLog(`Auth brute force: ${data ? data.message : 'No response data'}`);
   } catch (error) {
     bruteResult.className = `w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all text-rose-400`;
     bruteResult.innerText = `Error: Could not run simulation. ${error.message}`;
