@@ -81,9 +81,22 @@
             const response = await fetch('/api/metrics');
             if (!response.ok) throw new Error('Network response was not ok.');
             const data = await response.json();
-            document.getElementById('attacks_blocked').textContent = data.attacks_blocked;
-            document.getElementById('flaws_exploited').textContent = data.flaws_exploited;
-            document.getElementById('threats_spotted').textContent = data.threats_spotted;
+
+            // Update top navbar metrics if present
+            const ab = document.getElementById('attacks_blocked');
+            const fe = document.getElementById('flaws_exploited');
+            const ts = document.getElementById('threats_spotted');
+            if (ab) ab.textContent = data.attacks_blocked ?? 0;
+            if (fe) fe.textContent = data.flaws_exploited ?? 0;
+            if (ts) ts.textContent = data.threats_spotted ?? 0;
+
+            // Also update right-rail sidebar telemetry if present
+            const sab = document.getElementById('sidebar_attacks_blocked');
+            const sfe = document.getElementById('sidebar_flaws_exploited');
+            const sts = document.getElementById('sidebar_threats_spotted');
+            if (sab) sab.textContent = data.attacks_blocked ?? 0;
+            if (sfe) sfe.textContent = data.flaws_exploited ?? 0;
+            if (sts) sts.textContent = data.threats_spotted ?? 0;
         } catch (error) {
             console.error('Failed to fetch metrics:', error);
         }
