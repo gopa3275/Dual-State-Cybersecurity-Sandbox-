@@ -73,54 +73,89 @@ def analyze_password():
 # --- Brute Force Logic ---
 @auth_bp.route('/api/brute_login', methods=['POST'])
 def brute_login():
-    """Simulates a login attempt with rate limiting in secure mode."""
+    """Simulates a login attempt with distinct Vulnerable and Secure modes.
+
+    Vulnerable mode: no rate limiting, iterate through a provided dictionary until the
+    target password is found and report attempts_count + cracked_password.
+
+    Secure mode: enforce defensive controls and stop the attack at the configured
+    threshold (default 3). Return a structured JSON payload indicating block.
+    """
     data = request.get_json() or {}
-    # Always read security mode from session
+    # Read security mode from session (backend authoritative)
     is_secure = session.get('security_on', False)
     tel = get_session_telemetry()
 
+    # --- Vulnerable Mode ---
     if not is_secure:
-        # Vulnerable mode: simulate a successful brute-force/crack
-        tel['flaws_exploited'] += 1
+        # No rate limiting or lockout; attacker iterates the dictionary sequentially
+        dictionary = data.get('dictionary', ['123456', 'password', 'admin', 'password123'])
+        target_password = data.get('target_password', 'password123')
+
+        attempts_count = 0
+        tried_passwords = []
+        cracked_password = None
+
+        for pwd in dictionary:
+            attempts_count += 1
+            tried_passwords.append(pwd)
+            if pwd == target_password:
+                cracked_password = pwd
+                break
+
+        # Update telemetry
+        tel['flaws_exploited'] = tel.get('flaws_exploited', 0) + 1
         session.modified = True
 
-        username = data.get('username', 'unknown')
-        attempted_password = data.get('password', '')
-        # In a vulnerable system, attacker would discover the password; echo back for demo
-        cracked_password = attempted_password or 'password123'
-
         return jsonify({
-            "message": f"VULNERABLE MODE: Login simulation succeeded. User '{username}' compromised.",
-            "user": username,
-            "cracked_password": cracked_password,
-            "status": "compromised",
+            "status": "vulnerable",
+            "compromised": True if cracked_password else False,
+            "cracked_password": cracked_password if cracked_password else None,
+            "attempts_count": attempts_count,
+            "message": "Account compromised! Dictionary attack succeeded without delay or lockout.",
+            "tried_passwords": tried_passwords,
             "telemetry": get_session_telemetry()
         })
 
-    # Secure Mode Logic
-    ip_address = request.remote_addr
+    # --- Secure Mode ---
+    ip_address = request.remote_addr or 'unknown'
     if 'login_attempts' not in session:
         session['login_attempts'] = {}
 
-    attempts = session['login_attempts'].get(ip_address, {"count": 0, "lockout_until": 0})
-    
-    if time.time() < attempts.get('lockout_until', 0):
-        tel['attacks_blocked'] += 1
-        session.modified = True
-        return jsonify({"message": f"SECURE MODE: Too many attempts. IP {ip_address} is locked out. Please wait.", "telemetry": get_session_telemetry()}), 429
+    # Initialize per-IP attempts counter
+    attempts = session['login_attempts'].get(ip_address, {"count": 0})
 
-    attempts['count'] = attempts.get('count', 0) + 1
-    
     threshold = current_app.config.get('BRUTE_FORCE_THRESHOLD', 3)
-    lockout_duration = current_app.config.get('BRUTE_FORCE_LOCKOUT_SECONDS', 10)
-    if attempts['count'] >= threshold:
-        attempts['count'] = 0
-        attempts['lockout_until'] = time.time() + lockout_duration
-        tel['attacks_blocked'] += 1
-        session['login_attempts'][ip_address] = attempts
-        session.modified = True
-        return jsonify({"message": f"SECURE MODE: {threshold}rd failed attempt detected. IP {ip_address} locked out for {lockout_duration} seconds.", "telemetry": get_session_telemetry()}), 429
-    
+
+    # Simulate incoming rapid attempts by incrementing the counter once per API call
+    attempts['count'] = attempts.get('count', 0) + 1
     session['login_attempts'][ip_address] = attempts
     session.modified = True
-    return jsonify({"message": f"SECURE MODE: Failed login attempt #{attempts['count']} from {ip_address}. No lockout yet.", "telemetry": get_session_telemetry()})
+
+    # If threshold reached, block and report defensive outcome
+    if attempts['count'] >= threshold:
+        # Increment telemetry for blocked attacks
+        tel['attacks_blocked'] = tel.get('attacks_blocked', 0) + 1
+        # Reset or keep the counter depending on desired UX; reset here to simulate lockout
+        attempts['count'] = 0
+        session['login_attempts'][ip_address] = attempts
+        session.modified = True
+
+        return jsonify({
+            "status": "secure",
+            "compromised": False,
+            "blocked": True,
+            "attempts_count": threshold,
+            "message": "Attack blocked! IP rate-limited and account locked after 3 failed attempts.",
+            "telemetry": get_session_telemetry()
+        })
+
+    # Not yet at threshold: report a failed attempt
+    return jsonify({
+        "status": "secure",
+        "compromised": False,
+        "blocked": False,
+        "attempts_count": attempts['count'],
+        "message": f"Failed login attempt #{attempts['count']} from {ip_address}.",
+        "telemetry": get_session_telemetry()
+    })

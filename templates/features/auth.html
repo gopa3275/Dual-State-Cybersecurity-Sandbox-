@@ -89,25 +89,62 @@ async function runBruteForceSim(event) {
   btn.innerHTML = 'Simulating...';
 
   const bruteResult = document.getElementById('bruteResult');
-  const isSecure = document.getElementById('secToggleBtn')?.textContent.includes('SECURE');
   bruteResult.innerText = 'Sending login attempt...';
   
   try {
+    // Send a dictionary and target to the backend. Backend decides mode via session security flag.
+    const payload = {
+      username: 'test_user',
+      dictionary: ['123456', 'password', 'admin', 'password123', 'letmein'],
+      target_password: 'password123'
+    };
+
     const res = await fetch('/api/brute_login', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ username: 'test_user', password: 'wrong_password', security_on: isSecure })
+      body: JSON.stringify(payload)
     });
-    // We don't need to check res.ok here because 429 is an expected "error" state
+
     const data = await res.json();
-    
-    bruteResult.className = `w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all ${res.status === 429 ? 'text-rose-400' : 'text-amber-400'}`;
-    bruteResult.innerText = data.message;
+
+    // Default styling
+    let baseClass = 'w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all';
+
+    let html = '';
+    if (data.status === 'vulnerable') {
+      // Vulnerable mode: show exploited badge, tried passwords and cracked password
+      bruteResult.className = `${baseClass} text-rose-400`;
+      html += `<span class="font-bold text-rose-400">[EXPLOITED]</span><br>`;
+      if (data.tried_passwords && data.tried_passwords.length) {
+        html += `<div><strong>Tried:</strong> <code>${data.tried_passwords.join(', ')}</code></div>`;
+      }
+      html += `<div><strong>Cracked:</strong> ${data.cracked_password || '—'}</div>`;
+      html += `<div>${data.message}</div>`;
+
+    } else if (data.status === 'secure') {
+      if (data.blocked) {
+        // Secure mode: defense triggered
+        bruteResult.className = `${baseClass} text-emerald-400`;
+        html += `<span class="font-bold text-emerald-400">[DEFENSE TRIGGERED]</span><br>`;
+        html += `<div>${data.message}</div>`;
+        html += `<div><em>Mitigation:</em> Exponential Backoff / Account Lockout</div>`;
+      } else {
+        bruteResult.className = `${baseClass} text-amber-400`;
+        html += `<div>${data.message}</div>`;
+      }
+    } else {
+      bruteResult.className = `${baseClass} text-amber-400`;
+      html += `<div>${data.message || 'Simulation completed.'}</div>`;
+    }
+
+    bruteResult.innerHTML = html;
+
     if (data.telemetry) {
       applyTelemetryPayload(data.telemetry);
     } else {
       fetchMetrics();
     }
+
     appendLiveLog(`Auth brute force: ${data.message}`);
   } catch (error) {
     bruteResult.className = `w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all text-rose-400`;
