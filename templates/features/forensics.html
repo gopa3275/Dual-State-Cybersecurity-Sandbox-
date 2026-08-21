@@ -92,7 +92,12 @@ async function runLogAnalysis(event) {
       threatListDiv.innerHTML = '<div class="text-emerald-400">No threats found in the provided logs.</div>';
     }
     resultDiv.style.display = 'block';
-    fetchMetrics();
+    if (data.telemetry) {
+      applyTelemetryPayload(data.telemetry);
+    } else {
+      fetchMetrics();
+    }
+    appendLiveLog(`Forensics analysis: ${data.threats_found && data.threats_found.length ? data.threats_found.length + ' threats found' : 'no threats'}`);
   } catch (error) {
     threatListDiv.innerHTML = `<div class="text-rose-400">Error: Could not analyze logs. ${error.message}</div>`;
     resultDiv.style.display = 'block';
@@ -147,7 +152,12 @@ async function runIntegrityCheck(tamper) {
         `;
 
         if (tamper) {
-            fetchMetrics();
+            if (data.telemetry) {
+                applyTelemetryPayload(data.telemetry);
+            } else {
+                fetchMetrics();
+            }
+            appendLiveLog(`Forensics integrity check: ${data.status}`);
         }
 
     } catch (error) {

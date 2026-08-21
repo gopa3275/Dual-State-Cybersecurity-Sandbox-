@@ -71,7 +71,12 @@
                 badge.className = 'text-sm font-bold text-rose-400';
             }
             badge.textContent = `[${data.mode} MODE] ${data.message}`;
-            fetchMetrics(); // Update global telemetry counters
+            if (data.telemetry) {
+                applyTelemetryPayload(data.telemetry);
+            } else {
+                fetchMetrics(); // Update global telemetry counters
+            }
+            appendLiveLog(`XSS scan: ${data.mode} - ${data.message}`);
         } catch (error) {
             badge.className = 'text-sm font-bold text-rose-400';
             badge.textContent = `Error: Could not run scan. ${error.message}`;

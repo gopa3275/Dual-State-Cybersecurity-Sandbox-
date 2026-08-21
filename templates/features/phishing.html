@@ -63,7 +63,12 @@ async function runPhishingScan(event) {
     `;
     
     resultDiv.style.display = 'block';
-    fetchMetrics();
+    if (data.telemetry) {
+      applyTelemetryPayload(data.telemetry);
+    } else {
+      fetchMetrics();
+    }
+    appendLiveLog(`Phishing scan: ${data.risk_level} (${data.risk_score})`);
   } catch (error) {
     detailsDiv.innerHTML = `<span class="text-rose-400">Error: Could not perform scan. ${error.message}</span>`;
     resultDiv.style.display = 'block';

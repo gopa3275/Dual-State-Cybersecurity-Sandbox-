@@ -80,7 +80,12 @@ async function submitFlag(event) {
     if (res.ok && data.success) {
       statusDiv.className = 'text-emerald-400 font-medium pt-2';
       statusDiv.innerText = data.message;
-      fetchMetrics();
+      if (data.telemetry) {
+        applyTelemetryPayload(data.telemetry);
+      } else {
+        fetchMetrics();
+      }
+      appendLiveLog(`CTF flag submitted: ${data.message}`);
       updateCtfStatus(); // Update the progress counter
     } else {
       statusDiv.className = 'text-rose-400 font-medium pt-2';
@@ -140,7 +145,12 @@ async function getHint(event) {
             copyBtn.style.display = 'block';
             hintDiv.className = 'text-sm text-sky-300 pt-2 font-mono pr-10';
             hintDiv.innerText = data.hint;
-            fetchMetrics(); // Update telemetry for hint usage
+            if (data.telemetry) {
+              applyTelemetryPayload(data.telemetry);
+            } else {
+              fetchMetrics();
+            }
+            appendLiveLog(`CTF hint requested for ${challengeId}`); // Update telemetry for hint usage
         } else {
             copyBtn.style.display = 'none';
             hintDiv.className = 'text-sm text-rose-400 pt-2 font-mono pr-10';
@@ -179,7 +189,11 @@ async function resetProgress(event) {
             statusDiv.innerText = data.message;
             // Refresh UI
             updateCtfStatus();
-            fetchMetrics();
+            if (data.telemetry) {
+              applyTelemetryPayload(data.telemetry);
+            } else {
+              fetchMetrics();
+            }
         } else {
             statusDiv.className = 'text-sm font-medium pt-2 text-rose-400';
             statusDiv.innerText = data.message || 'Failed to reset progress.';

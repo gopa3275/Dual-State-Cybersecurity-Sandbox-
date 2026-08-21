@@ -127,47 +127,73 @@
                 const res = await fetch('/api/metrics');
                 if (!res.ok) throw new Error(`API Error: ${res.status}`);
                 const data = await res.json();
+                applyTelemetryPayload(data);
+            } catch (error) {
+                console.error("Failed to fetch metrics:", error);
+            }
+        }
 
-                // Top navbar elements (if present)
-                const blockedEl = document.getElementById('attacks_blocked');
-                const exploitedEl = document.getElementById('flaws_exploited');
-                const spottedEl = document.getElementById('threats_spotted');
+        // Apply telemetry object to UI (top bar, sidebar) and update currentMetrics
+        function applyTelemetryPayload(data) {
+            if (!data) return;
+            const blockedEl = document.getElementById('attacks_blocked');
+            const exploitedEl = document.getElementById('flaws_exploited');
+            const spottedEl = document.getElementById('threats_spotted');
 
-                // Right-rail sidebar elements (if present)
-                const sBlockedEl = document.getElementById('sidebar_attacks_blocked');
-                const sExploitedEl = document.getElementById('sidebar_flaws_exploited');
-                const sSpottedEl = document.getElementById('sidebar_threats_spotted');
+            const sBlockedEl = document.getElementById('sidebar_attacks_blocked');
+            const sExploitedEl = document.getElementById('sidebar_flaws_exploited');
+            const sSpottedEl = document.getElementById('sidebar_threats_spotted');
 
-                // Update and flash on top navbar only when elements exist
-                if (blockedEl && data.attacks_blocked > currentMetrics.attacks_blocked) {
+            // Flash logic comparing to currentMetrics
+            try {
+                if (blockedEl && data.attacks_blocked > (currentMetrics.attacks_blocked || 0)) {
                     if (blockedEl.parentElement) blockedEl.parentElement.classList.remove('flash-green');
-                    void blockedEl.offsetWidth; // Trigger reflow to restart animation
+                    void blockedEl.offsetWidth;
                     if (blockedEl.parentElement) blockedEl.parentElement.classList.add('flash-green');
                 }
-                if (exploitedEl && data.flaws_exploited > currentMetrics.flaws_exploited) {
+                if (exploitedEl && data.flaws_exploited > (currentMetrics.flaws_exploited || 0)) {
                     if (exploitedEl.parentElement) exploitedEl.parentElement.classList.remove('flash-red');
                     if (exploitedEl.offsetWidth !== undefined) void exploitedEl.offsetWidth;
                     if (exploitedEl.parentElement) exploitedEl.parentElement.classList.add('flash-red');
                 }
-                if (spottedEl && data.threats_spotted > currentMetrics.threats_spotted) {
+                if (spottedEl && data.threats_spotted > (currentMetrics.threats_spotted || 0)) {
                     if (spottedEl.parentElement) spottedEl.parentElement.classList.remove('flash-amber');
                     if (spottedEl.offsetWidth !== undefined) void spottedEl.offsetWidth;
                     if (spottedEl.parentElement) spottedEl.parentElement.classList.add('flash-amber');
                 }
+            } catch (e) {
+                // ignore DOM issues
+            }
 
-                if (blockedEl) blockedEl.textContent = data.attacks_blocked || 0;
-                if (exploitedEl) exploitedEl.textContent = data.flaws_exploited || 0;
-                if (spottedEl) spottedEl.textContent = data.threats_spotted || 0;
+            if (blockedEl) blockedEl.textContent = data.attacks_blocked ?? 0;
+            if (exploitedEl) exploitedEl.textContent = data.flaws_exploited ?? 0;
+            if (spottedEl) spottedEl.textContent = data.threats_spotted ?? 0;
 
-                // Mirror into sidebar if present
-                if (sBlockedEl) sBlockedEl.textContent = data.attacks_blocked ?? 0;
-                if (sExploitedEl) sExploitedEl.textContent = data.flaws_exploited ?? 0;
-                if (sSpottedEl) sSpottedEl.textContent = data.threats_spotted ?? 0;
+            if (sBlockedEl) sBlockedEl.textContent = data.attacks_blocked ?? 0;
+            if (sExploitedEl) sExploitedEl.textContent = data.flaws_exploited ?? 0;
+            if (sSpottedEl) sSpottedEl.textContent = data.threats_spotted ?? 0;
 
-                // Store new values for next comparison
-                currentMetrics = data;
-            } catch (error) {
-                console.error("Failed to fetch metrics:", error);
+            // Update local snapshot
+            currentMetrics = {
+                attacks_blocked: data.attacks_blocked ?? 0,
+                flaws_exploited: data.flaws_exploited ?? 0,
+                threats_spotted: data.threats_spotted ?? 0
+            };
+        }
+
+        // Append a short line to the live logs panel (if present)
+        function appendLiveLog(message) {
+            try {
+                const el = document.getElementById('liveLogs');
+                if (!el) return;
+                const now = new Date();
+                const ts = now.toISOString();
+                // Prepend new messages so latest appear on top
+                el.innerText = `[${ts}] ${message}\n` + el.innerText;
+                // Trim if too large
+                if (el.innerText.length > 20000) el.innerText = el.innerText.substring(0, 20000);
+            } catch (e) {
+                /* ignore */
             }
         }
 

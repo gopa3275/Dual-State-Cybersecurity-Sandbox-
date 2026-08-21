@@ -103,7 +103,12 @@ async function runBruteForceSim(event) {
     
     bruteResult.className = `w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all ${res.status === 429 ? 'text-rose-400' : 'text-amber-400'}`;
     bruteResult.innerText = data.message;
-    fetchMetrics();
+    if (data.telemetry) {
+      applyTelemetryPayload(data.telemetry);
+    } else {
+      fetchMetrics();
+    }
+    appendLiveLog(`Auth brute force: ${data.message}`);
   } catch (error) {
     bruteResult.className = `w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all text-rose-400`;
     bruteResult.innerText = `Error: Could not run simulation. ${error.message}`;

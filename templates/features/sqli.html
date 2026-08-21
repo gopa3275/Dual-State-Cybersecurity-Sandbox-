@@ -76,7 +76,14 @@
             verdictDiv.innerText = data.verdict || data.message;
             verdictDiv.className = isSecurityOn ? "text-sm font-bold text-emerald-400" : "text-sm font-bold text-rose-400";
             resultsDiv.innerText = JSON.stringify(data.results || [], null, 2);
-            fetchMetrics();
+            if (data.telemetry) {
+                applyTelemetryPayload(data.telemetry);
+            } else {
+                fetchMetrics();
+            }
+            // Add a short live-log entry
+            appendLiveLog(`SQLi scan: ${data.status || 'unknown'} - ${data.verdict || data.message || ''}`);
+            
         } catch (error) {
             verdictDiv.className = 'text-sm font-bold text-rose-400';
             verdictDiv.innerText = `Error: Could not execute query. ${error.message}`;

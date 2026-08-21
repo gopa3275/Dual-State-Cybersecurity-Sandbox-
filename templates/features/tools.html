@@ -95,6 +95,12 @@ async function runTransform(event, mode) {
     const data = await res.json();
     resultDiv.className = resultDiv.className.replace('text-rose-400', 'text-emerald-400');
     resultDiv.innerText = data.result || 'Error performing transformation';
+    if (data.telemetry) {
+      applyTelemetryPayload(data.telemetry);
+    } else {
+      fetchMetrics();
+    }
+    appendLiveLog(`Tools transform: ${mode}`);
   } catch (error) {
     resultDiv.className = resultDiv.className.replace('text-emerald-400', 'text-rose-400');
     resultDiv.innerText = `Error: ${error.message}`;

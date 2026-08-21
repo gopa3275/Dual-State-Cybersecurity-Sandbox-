@@ -89,7 +89,12 @@ async function runSsrf(event) {
             resultDiv.className = 'w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[200px] overflow-x-auto font-mono text-sm text-rose-400';
             resultDiv.innerText = `--- ERROR: ${res.status} ---\n\n${data.error}`;
         }
-        fetchMetrics();
+        if (data.telemetry) {
+            applyTelemetryPayload(data.telemetry);
+        } else {
+            fetchMetrics();
+        }
+        appendLiveLog(`SSRF fetch: ${res.ok ? 'success' : 'error'} - ${data.status_code || data.error || ''}`);
     } catch (error) {
         resultDiv.className = 'w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[200px] overflow-x-auto font-mono text-sm text-rose-400';
         resultDiv.innerText = `--- CLIENT ERROR ---\n\nCould not fetch from API: ${error.message}`;

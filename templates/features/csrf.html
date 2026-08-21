@@ -62,3 +62,16 @@
   </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Ensure telemetry updates after form posts and redirects (CSRF flow uses flashes)
+  try {
+    fetchMetrics();
+  } catch (e) {
+    console.error('Failed to refresh telemetry after CSRF flow', e);
+  }
+});
+</script>
+{% endblock %}
