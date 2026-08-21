@@ -114,15 +114,30 @@
     }
   
     async function toggleSecurityMode() {
+        const secToggleBtn = document.getElementById('secToggleBtn');
+        if (secToggleBtn) {
+            secToggleBtn.disabled = true;
+            secToggleBtn.setAttribute('aria-busy', 'true');
+        }
+
         try {
             const response = await fetch('/api/security_mode', { method: 'POST' });
             if (!response.ok) throw new Error('Network response was not ok.');
             const data = await response.json();
-            // Server now returns 'security_on'
+            // Server now returns 'security_on' and may include telemetry
             updateSecurityButtonUI(data.security_on);
-            window.fetchMetrics(); // Update telemetry after security mode changes
+            if (data.telemetry && typeof applyTelemetryPayload === 'function') {
+                applyTelemetryPayload(data.telemetry);
+            } else {
+                window.fetchMetrics(); // Update telemetry after security mode changes
+            }
         } catch (error) {
             console.error('Failed to toggle security mode:', error);
+        } finally {
+            if (secToggleBtn) {
+                secToggleBtn.disabled = false;
+                secToggleBtn.removeAttribute('aria-busy');
+            }
         }
     }
   

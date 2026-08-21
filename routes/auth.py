@@ -80,9 +80,22 @@ def brute_login():
     tel = get_session_telemetry()
 
     if not is_secure:
+        # Vulnerable mode: simulate a successful brute-force/crack
         tel['flaws_exploited'] += 1
         session.modified = True
-        return jsonify({"message": "VULNERABLE MODE: Login attempt processed immediately. No rate-limiting enforced.", "telemetry": get_session_telemetry()})
+
+        username = data.get('username', 'unknown')
+        attempted_password = data.get('password', '')
+        # In a vulnerable system, attacker would discover the password; echo back for demo
+        cracked_password = attempted_password or 'password123'
+
+        return jsonify({
+            "message": f"VULNERABLE MODE: Login simulation succeeded. User '{username}' compromised.",
+            "user": username,
+            "cracked_password": cracked_password,
+            "status": "compromised",
+            "telemetry": get_session_telemetry()
+        })
 
     # Secure Mode Logic
     ip_address = request.remote_addr
