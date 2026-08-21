@@ -43,7 +43,8 @@ def check_integrity():
             "status": "🚨 INTEGRITY VIOLATION DETECTED",
             "baseline": baseline_hash,
             "current": current_hash,
-            "explanation": "SHA-256 mismatch! Configuration file was altered without authorization."
+            "explanation": "SHA-256 mismatch! Configuration file was altered without authorization.",
+            "telemetry": get_session_telemetry()
         })
     
     return jsonify({
@@ -51,7 +52,8 @@ def check_integrity():
         "status": "✅ HASH INTEGRITY VERIFIED",
         "baseline": baseline_hash,
         "current": current_hash,
-        "explanation": "Current SHA-256 checksum matches trusted baseline."
+        "explanation": "Current SHA-256 checksum matches trusted baseline.",
+        "telemetry": get_session_telemetry()
     })
 
 @forensics_bp.route('/api/analyze_logs', methods=['POST'])
@@ -80,5 +82,6 @@ def analyze_logs():
 
     return jsonify({
         "raw_logs": raw_logs,
-        "threats_found": threats_found
+        "threats_found": threats_found,
+        "telemetry": get_session_telemetry()
     })

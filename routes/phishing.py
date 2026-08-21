@@ -60,7 +60,8 @@ def detect_phishing():
             "domain": domain,
             "risk_level": risk_level,
             "risk_score": min(risk_score, 100),
-            "findings": findings if findings else ["No common phishing heuristics triggered. URL appears to be safe."]
+            "findings": findings if findings else ["No common phishing heuristics triggered. URL appears to be safe."],
+            "telemetry": get_session_telemetry()
         })
     except Exception as e:
         return jsonify({"error": f"Could not process URL: Invalid format or unexpected error. Details: {str(e)}"}), 400
@@ -84,5 +85,6 @@ def detect_phishing():
         "domain": domain,
         "risk_level": risk_level,
         "risk_score": min(risk_score, 100),
-        "findings": findings if findings else ["No common phishing heuristics triggered. URL appears to be safe."]
+        "findings": findings if findings else ["No common phishing heuristics triggered. URL appears to be safe."],
+        "telemetry": get_session_telemetry()
     })

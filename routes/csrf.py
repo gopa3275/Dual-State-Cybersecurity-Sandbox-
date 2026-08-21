@@ -6,7 +6,8 @@ csrf_bp = Blueprint('csrf', __name__)
 
 @csrf_bp.route('/csrf', methods=['GET', 'POST'])
 def csrf_page():
-    is_secure = session.get('security_mode', False)
+    # Use unified session key
+    is_secure = session.get('security_on', False)
     
     if 'user_email' not in session:
         session['user_email'] = 'user@example.com'

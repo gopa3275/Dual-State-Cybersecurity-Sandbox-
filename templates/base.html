@@ -96,7 +96,8 @@
         async function toggleSecurityMode() {
             const res = await fetch('/api/security_mode', { method: 'POST' });
             const data = await res.json();
-            isSecurityOn = data.security_mode;
+            // Server returns unified key 'security_on'
+            isSecurityOn = data.security_on;
             updateSecurityButton();
         }
 
@@ -208,7 +209,7 @@
             updateThemeButton(savedTheme);
 
             fetch('/api/security_mode').then(res => res.json()).then(data => {
-                isSecurityOn = data.security_mode;
+                isSecurityOn = data.security_on;
                 updateSecurityButton();
             });
             fetchMetrics();

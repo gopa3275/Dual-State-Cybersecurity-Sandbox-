@@ -22,11 +22,12 @@ def ssrf_page():
 def fetch_url_content():
     data = request.get_json() or {}
     url = data.get('url', '')
-    is_secure = data.get('security_on', session.get('security_mode', False))
+    # Always use the session key for security
+    is_secure = session.get('security_on', False)
     tel = get_session_telemetry()
 
     if not url:
-        return jsonify({"error": "URL is required."}), 400
+        return jsonify({"error": "URL is required.", "telemetry": get_session_telemetry()}), 400
 
     if is_secure:
         # SECURE MODE: Validate the URL against a strict allowlist
@@ -48,7 +49,7 @@ def fetch_url_content():
         except (ValueError, AttributeError) as e:
             tel['attacks_blocked'] += 1
             session.modified = True
-            return jsonify({"error": f"ATTACK BLOCKED: Invalid URL. {str(e)}"}), 400
+            return jsonify({"error": f"ATTACK BLOCKED: Invalid URL. {str(e)}", "telemetry": get_session_telemetry()}), 400
     else:
         # VULNERABLE MODE: No validation, just log the potential exploit
         tel['flaws_exploited'] += 1
@@ -60,6 +61,6 @@ def fetch_url_content():
         
         content = response.text[:2048] + ('...' if len(response.text) > 2048 else '')
         
-        return jsonify({"url": url, "content": content, "status_code": response.status_code})
+        return jsonify({"url": url, "content": content, "status_code": response.status_code, "telemetry": get_session_telemetry()})
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Could not fetch URL: {str(e)}"}), 500
+        return jsonify({"error": f"Could not fetch URL: {str(e)}", "telemetry": get_session_telemetry()}), 500}

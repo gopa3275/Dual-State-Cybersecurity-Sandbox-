@@ -19,13 +19,16 @@ def get_metrics():
 
 @tools_bp.route('/api/security_mode', methods=['GET', 'POST'])
 def security_mode():
-    """Toggles or gets the global security mode in the session."""
+    """Toggles or gets the global security mode in the session.
+
+    Uses a unified session key 'security_on' so all routes read from the same place.
+    """
     if request.method == 'POST':
         # Toggle the existing mode; default to False (Vulnerable) if not set
-        session['security_mode'] = not session.get('security_mode', False)
+        session['security_on'] = not session.get('security_on', False)
         session.modified = True
     
-    return jsonify({"security_mode": session.get('security_mode', False)})
+    return jsonify({"security_on": session.get('security_on', False), "telemetry": get_session_telemetry()})
 
 @tools_bp.route('/api/reset_all', methods=['POST'])
 def reset_all():
@@ -58,9 +61,9 @@ def tools_encode():
         else:
             return jsonify({"success": False, "result": "Invalid mode specified."}), 400
         
-        return jsonify({"success": True, "result": result})
+        return jsonify({"success": True, "result": result, "telemetry": get_session_telemetry()})
     except Exception as e:
-        return jsonify({"success": False, "result": f"Transformation Error: {str(e)}"}), 400
+        return jsonify({"success": False, "result": f"Transformation Error: {str(e)}", "telemetry": get_session_telemetry()}), 400
 
 @tools_bp.route('/api/tools/hash', methods=['POST'])
 def tools_hash():
@@ -69,4 +72,4 @@ def tools_hash():
     text = data.get('text', '')
     hash_object = hashlib.sha256(text.encode())
     hex_dig = hash_object.hexdigest()
-    return jsonify({"success": True, "hash": hex_dig})
+    return jsonify({"success": True, "hash": hex_dig, "telemetry": get_session_telemetry()})

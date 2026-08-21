@@ -25,7 +25,8 @@ def get_ctf_status():
     captured_flags = session.get('captured_flags', [])
     return jsonify({
         "total_flags": len(CORRECT_FLAGS),
-        "captured_count": len(captured_flags)
+        "captured_count": len(captured_flags),
+        "telemetry": get_session_telemetry()
     })
 
 @ctf_bp.route('/api/ctf/hint', methods=['POST'])
@@ -38,9 +39,9 @@ def get_hint():
         tel = get_session_telemetry()
         tel['threats_spotted'] += 1 # Using a hint is a "threat" to solving it alone
         session.modified = True
-        return jsonify({"success": True, "hint": HINTS[challenge_id]})
+        return jsonify({"success": True, "hint": HINTS[challenge_id], "telemetry": get_session_telemetry()})
     
-    return jsonify({"success": False, "hint": "No hint available for this challenge."}), 404
+    return jsonify({"success": False, "hint": "No hint available for this challenge.", "telemetry": get_session_telemetry()}), 404
 
 @ctf_bp.route('/api/ctf/reset', methods=['POST'])
 def reset_ctf_progress():
@@ -67,12 +68,12 @@ def verify_flag():
             session['captured_flags'] = []
 
         if flag in session['captured_flags']:
-            return jsonify({"success": True, "message": "✅ Correct, but you've already submitted this flag."})
+            return jsonify({"success": True, "message": "✅ Correct, but you've already submitted this flag.", "telemetry": get_session_telemetry()})
 
         tel = get_session_telemetry()
         tel['flaws_exploited'] += 1
         session['captured_flags'].append(flag)
         session.modified = True
-        return jsonify({"success": True, "message": "🎉 Correct Flag! Challenge Completed."})
+        return jsonify({"success": True, "message": "🎉 Correct Flag! Challenge Completed.", "telemetry": get_session_telemetry()})
     
-    return jsonify({"success": False, "message": "❌ Invalid Flag. Keep trying!"}), 400
+    return jsonify({"success": False, "message": "❌ Invalid Flag. Keep trying!", "telemetry": get_session_telemetry()}), 400

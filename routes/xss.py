@@ -31,7 +31,7 @@ def scan_xss():
     user_input = data.get('payload', '')
     
     # Use session for security mode and telemetry
-    is_secure = data.get('security_on', session.get('security_mode', False))
+    is_secure = session.get('security_on', False)
     tel = get_session_telemetry()
 
     if is_secure:
@@ -44,7 +44,8 @@ def scan_xss():
             "status": "neutralized",
             "mode": "SECURE",
             "output": sanitized,
-            "message": "Payload safely sanitized via HTML entity encoding. CSP is active."
+            "message": "Payload safely sanitized via HTML entity encoding. CSP is active.",
+            "telemetry": get_session_telemetry()
         }))
         return response
     else:
@@ -55,5 +56,6 @@ def scan_xss():
             "status": "executed",
             "mode": "VULNERABLE",
             "output": user_input,
-            "message": "Warning: Unsanitized input rendered directly!"
+            "message": "Warning: Unsanitized input rendered directly!",
+            "telemetry": get_session_telemetry()
         })

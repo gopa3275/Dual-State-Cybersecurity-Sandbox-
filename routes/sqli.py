@@ -24,7 +24,8 @@ def sqli_page():
 def sqli_scan():
     data = request.get_json() or {}
     username_input = data.get('username', '')
-    is_secure = data.get('security_on', session.get('security_mode', False))
+    # Consistently read security mode from session
+    is_secure = session.get('security_on', False)
     
     tel = get_session_telemetry()
     # Create a fresh, isolated in-memory database for each request to ensure test purity.
@@ -40,13 +41,14 @@ def sqli_scan():
             session.modified = True
             return jsonify({
                 "status": "SECURE",
-                "query": "SELECT id, username, role, salary FROM users WHERE username = ?",
+                "query": query_str,
                 "results": [{"id": r[0], "username": r[1], "role": r[2], "salary": r[3]} for r in results],
                 "verdict": f"🛡️ Secure: Input '{username_input}' was bound safely as a parameter.",
-                "code": "cursor.execute('SELECT * FROM users WHERE username = ?', (input_str,))"
+                "code": "cursor.execute('SELECT * FROM users WHERE username = ?', (input_str,))",
+                "telemetry": get_session_telemetry()
             })
         except Exception as e:
-            return jsonify({"status": "ERROR", "message": str(e)})
+            return jsonify({"status": "ERROR", "message": str(e), "telemetry": get_session_telemetry()})
     else:
         query_str = f"SELECT id, username, role, salary FROM users WHERE username = '{username_input}'"
         try:
@@ -59,7 +61,8 @@ def sqli_scan():
                 "query": query_str,
                 "results": [{"id": r[0], "username": r[1], "role": r[2], "salary": r[3]} for r in results],
                 "verdict": "🚨 Vulnerable: Raw string formatting allowed SQL manipulation!",
-                "code": f"cursor.execute(f'SELECT * FROM users WHERE username = \"{{input_str}}\"')\n# Exploit Payload: ' OR '1'='1"
+                "code": f"cursor.execute(f'SELECT * FROM users WHERE username = \"{{input_str}}\"')\n# Exploit Payload: ' OR '1'='1",
+                "telemetry": get_session_telemetry()
             })
         except Exception as e:
-            return jsonify({"status": "SQL_ERROR", "query": query_str, "message": f"SQL Syntax Error: {str(e)}"})
+            return jsonify({"status": "SQL_ERROR", "query": query_str, "message": f"SQL Syntax Error: {str(e)}", "telemetry": get_session_telemetry()})

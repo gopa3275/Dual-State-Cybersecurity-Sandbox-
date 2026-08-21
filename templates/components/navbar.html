@@ -118,7 +118,8 @@
             const response = await fetch('/api/security_mode', { method: 'POST' });
             if (!response.ok) throw new Error('Network response was not ok.');
             const data = await response.json();
-            updateSecurityButtonUI(data.security_mode);
+            // Server now returns 'security_on'
+            updateSecurityButtonUI(data.security_on);
             window.fetchMetrics(); // Update telemetry after security mode changes
         } catch (error) {
             console.error('Failed to toggle security mode:', error);
@@ -157,6 +158,6 @@
     }
   
     // Sync security button UI on initial page load
-    fetch('/api/security_mode').then(res => res.json()).then(data => updateSecurityButtonUI(data.security_mode));
+    fetch('/api/security_mode').then(res => res.json()).then(data => updateSecurityButtonUI(data.security_on));
   });
 </script>

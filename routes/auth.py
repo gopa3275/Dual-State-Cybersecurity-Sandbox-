@@ -66,7 +66,8 @@ def analyze_password():
         "entropy": round(total_bits, 2),
         "density": density,
         "crack_time": crack_time,
-        "feedback": feedback
+        "feedback": feedback,
+        "telemetry": get_session_telemetry()
     })
 
 # --- Brute Force Logic ---
@@ -74,13 +75,14 @@ def analyze_password():
 def brute_login():
     """Simulates a login attempt with rate limiting in secure mode."""
     data = request.get_json() or {}
-    is_secure = data.get('security_on', session.get('security_mode', False))
+    # Always read security mode from session
+    is_secure = session.get('security_on', False)
     tel = get_session_telemetry()
 
     if not is_secure:
         tel['flaws_exploited'] += 1
         session.modified = True
-        return jsonify({"message": "VULNERABLE MODE: Login attempt processed immediately. No rate-limiting enforced."})
+        return jsonify({"message": "VULNERABLE MODE: Login attempt processed immediately. No rate-limiting enforced.", "telemetry": get_session_telemetry()})
 
     # Secure Mode Logic
     ip_address = request.remote_addr
@@ -92,7 +94,7 @@ def brute_login():
     if time.time() < attempts.get('lockout_until', 0):
         tel['attacks_blocked'] += 1
         session.modified = True
-        return jsonify({"message": f"SECURE MODE: Too many attempts. IP {ip_address} is locked out. Please wait."}), 429
+        return jsonify({"message": f"SECURE MODE: Too many attempts. IP {ip_address} is locked out. Please wait.", "telemetry": get_session_telemetry()}), 429
 
     attempts['count'] = attempts.get('count', 0) + 1
     
@@ -104,8 +106,8 @@ def brute_login():
         tel['attacks_blocked'] += 1
         session['login_attempts'][ip_address] = attempts
         session.modified = True
-        return jsonify({"message": f"SECURE MODE: {threshold}rd failed attempt detected. IP {ip_address} locked out for {lockout_duration} seconds."}), 429
+        return jsonify({"message": f"SECURE MODE: {threshold}rd failed attempt detected. IP {ip_address} locked out for {lockout_duration} seconds.", "telemetry": get_session_telemetry()}), 429
     
     session['login_attempts'][ip_address] = attempts
     session.modified = True
-    return jsonify({"message": f"SECURE MODE: Failed login attempt #{attempts['count']} from {ip_address}. No lockout yet."})
+    return jsonify({"message": f"SECURE MODE: Failed login attempt #{attempts['count']} from {ip_address}. No lockout yet.", "telemetry": get_session_telemetry()})
