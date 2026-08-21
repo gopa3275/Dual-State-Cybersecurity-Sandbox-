@@ -54,7 +54,7 @@ def reset_ctf_progress():
         session.pop('telemetry')
         
     session.modified = True
-    return jsonify({"success": True, "message": "CTF progress has been reset."})
+    return jsonify({"success": True, "message": "CTF progress has been reset.", "telemetry": get_session_telemetry()})
 
 @ctf_bp.route('/api/ctf/verify', methods=['POST'])
 def verify_flag():
@@ -76,4 +76,5 @@ def verify_flag():
         session.modified = True
         return jsonify({"success": True, "message": "🎉 Correct Flag! Challenge Completed.", "telemetry": get_session_telemetry()})
     
-    return jsonify({"success": False, "message": "❌ Invalid Flag. Keep trying!", "telemetry": get_session_telemetry()}), 400
+    # Return 200 with a structured response so clients can always rely on a JSON body containing telemetry
+    return jsonify({"success": False, "message": "❌ Invalid Flag. Keep trying!", "telemetry": get_session_telemetry()}), 200
