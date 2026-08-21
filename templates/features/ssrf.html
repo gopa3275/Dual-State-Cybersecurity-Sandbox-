@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="left-column space-y-6">
+  <!-- Module Header -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)]">
+    <h2 class="text-2xl font-bold text-[var(--text-color)]">10 // Server-Side Request Forgery (SSRF)</h2>
+    <p class="text-[var(--text-muted)] text-sm mt-1">
+      Demonstrates how an attacker can force the server to make requests to internal or arbitrary external resources.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- SSRF Input Card -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">URL Fetcher</h3>
+      <p class="text-sm text-[var(--text-muted)]">Enter a URL for the server to fetch and display its content.</p>
+      
+      <div>
+        <label for="ssrfUrl" class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Target URL</label>
+        <input type="text" name="ssrfUrl" id="ssrfUrl" value="http://worldtimeapi.org/api/ip" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-color)] rounded-lg p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+      </div>
+      <button onclick="runSsrf(event)" class="w-full py-2.5 bg-[var(--accent-color)] text-white text-sm rounded-lg font-medium hover:opacity-90 transition">
+        Fetch URL Content
+      </button>
+      
+      <div class="pt-2">
+        <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Example Payloads</label>
+        <ul class="text-sm text-[var(--text-muted)] space-y-1">
+            <li class="flex items-center justify-between">
+                <span><code id="ssrf-payload-1" class="text-amber-400">http://127.0.0.1:5000/api/metrics</code> (Internal API)</span>
+                <button onclick="copyToClipboard('ssrf-payload-1')" title="Copy Payload" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+                </button>
+            </li>
+            <li class="flex items-center justify-between">
+                <span><code id="ssrf-payload-2" class="text-amber-400">file:///etc/passwd</code> (Local File)</span>
+                <button onclick="copyToClipboard('ssrf-payload-2')" title="Copy Payload" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+                </button>
+            </li>
+            <li class="flex items-center justify-between">
+                <span><code id="ssrf-payload-3" class="text-amber-400">http://example.com</code> (Allowed Domain)</span>
+                <button onclick="copyToClipboard('ssrf-payload-3')" title="Copy Payload" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+                </button>
+            </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SSRF Output Card -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">Server Response</h3>
+      <div class="relative">
+        <pre id="ssrfResult" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[200px] overflow-x-auto font-mono text-sm text-emerald-400 pr-10">Awaiting URL fetch...</pre>
+        <button onclick="copyToClipboard('ssrfResult')" title="Copy to Clipboard" class="absolute top-2 right-2 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function runSsrf(event) {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Fetching...';
+
+    const url = document.getElementById('ssrfUrl').value;
+    const resultDiv = document.getElementById('ssrfResult');
+
+    try {
+        const res = await fetch('/api/ssrf/fetch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, security_on: isSecurityOn })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            resultDiv.className = 'w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[200px] overflow-x-auto font-mono text-sm text-emerald-400';
+            resultDiv.innerText = `--- STATUS: ${data.status_code} ---\n\n${data.content}`;
+        } else {
+            resultDiv.className = 'w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[200px] overflow-x-auto font-mono text-sm text-rose-400';
+            resultDiv.innerText = `--- ERROR: ${res.status} ---\n\n${data.error}`;
+        }
+        if (data.telemetry) {
+            applyTelemetryPayload(data.telemetry);
+        } else {
+            fetchMetrics();
+        }
+        appendLiveLog(`SSRF fetch: ${res.ok ? 'success' : 'error'} - ${data.status_code || data.error || ''}`);
+    } catch (error) {
+        resultDiv.className = 'w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[200px] overflow-x-auto font-mono text-sm text-rose-400';
+        resultDiv.innerText = `--- CLIENT ERROR ---\n\nCould not fetch from API: ${error.message}`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+</script>
+{% endblock %}

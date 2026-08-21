@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="left-column space-y-6">
+  <!-- Module Header -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)]">
+    <h2 class="text-2xl font-bold text-[var(--text-color)]">03 & 04 // Password Audit & Brute-Force Simulator</h2>
+    <p class="text-[var(--text-muted)] text-sm mt-1">
+      Evaluate mathematical password entropy and simulate automated dictionary rate-limiting lockouts.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Password Audit Section -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">🔒 Password Entropy Evaluator</h3>
+      <div class="flex gap-3">
+        <input type="text" id="pwdInput" value="admin123" placeholder="Enter password to audit..." class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-color)] rounded-lg p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+        <button onclick="runPasswordAudit(event)" class="px-4 py-2 bg-[var(--accent-color)] text-white text-sm rounded-lg font-medium hover:opacity-90 transition whitespace-nowrap">Audit Strength</button>
+      </div>
+      <div class="relative">
+        <div id="pwdResult" class="font-mono text-sm min-h-[48px] text-[var(--text-muted)] pr-10">Awaiting input...</div>
+        <button onclick="copyToClipboard('pwdResult')" title="Copy to Clipboard" class="absolute top-0 right-0 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Brute Force Simulator Section -->
+    <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+      <h3 class="text-lg font-semibold text-[var(--text-color)]">⚡ Brute-Force Rate Limiter Simulation</h3>
+      <p class="text-sm text-[var(--text-muted)]">Simulate multiple sequential failed login attempts from a bot script.</p>
+      <button onclick="runBruteForceSim(event)" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm rounded-lg transition">Simulate Rapid Failed Login Attempt</button>
+      <div class="relative">
+        <div id="bruteResult" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-amber-400 font-mono text-xs p-3 rounded-lg min-h-[48px] break-all pr-10">
+          Click button to trigger attempt sequence...
+        </div>
+        <button onclick="copyToClipboard('bruteResult')" title="Copy to Clipboard" class="absolute top-2 right-2 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function runPasswordAudit(event) {
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Auditing...';
+
+  const password = document.getElementById('pwdInput').value;
+  const resultDiv = document.getElementById('pwdResult');
+
+  try {
+    const res = await fetch('/api/analyze_password', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ password })
+    });
+    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    const data = await res.json();
+    
+    let color = 'text-emerald-400';
+    if (data.density.startsWith('WEAK')) color = 'text-rose-400';
+    else if (data.density.startsWith('MODERATE')) color = 'text-amber-400';
+
+    resultDiv.innerHTML = `
+      <span class="font-bold ${color}">[${data.density}]</span><br>
+      <strong>Entropy:</strong> ${data.entropy} bits<br>
+      <strong>Est. Crack Time:</strong> ${data.crack_time}<br>
+      <strong>Feedback:</strong> ${data.feedback}
+    `;
+  } catch (error) {
+    resultDiv.innerHTML = `<span class="text-rose-400">Error: Could not perform audit. ${error.message}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
+
+async function runBruteForceSim(event) {
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Simulating...';
+
+  const bruteResult = document.getElementById('bruteResult');
+  const isSecure = document.getElementById('secToggleBtn')?.textContent.includes('SECURE');
+  bruteResult.innerText = 'Sending login attempt...';
+  
+  try {
+    const res = await fetch('/api/brute_login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ username: 'test_user', password: 'wrong_password', security_on: isSecure })
+    });
+    // We don't need to check res.ok here because 429 is an expected "error" state
+    const data = await res.json();
+    
+    bruteResult.className = `w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all ${res.status === 429 ? 'text-rose-400' : 'text-amber-400'}`;
+    bruteResult.innerText = data.message;
+    if (data.telemetry) {
+      applyTelemetryPayload(data.telemetry);
+    } else {
+      fetchMetrics();
+    }
+    appendLiveLog(`Auth brute force: ${data.message}`);
+  } catch (error) {
+    bruteResult.className = `w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] font-mono text-xs p-3 rounded-lg min-h-[48px] break-all text-rose-400`;
+    bruteResult.innerText = `Error: Could not run simulation. ${error.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
+</script>
+{% endblock %}

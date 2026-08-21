@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="left-column space-y-6">
+  <!-- Module Header -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)]">
+    <h2 class="text-2xl font-bold text-[var(--text-color)]">05 // Phishing Link Heuristics Detector</h2>
+    <p class="text-[var(--text-muted)] text-sm mt-1">
+      Inspect suspicious URLs for IP host masking, typosquatting strings, and unsafe domain redirects.
+    </p>
+  </div>
+
+  <!-- Phishing Scanner Card -->
+  <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
+    <h3 class="text-lg font-semibold text-[var(--text-color)]">Target URL to Scan</h3>
+    <div class="flex gap-3">
+      <input type="text" id="phishUrlInput" value="http://paypal-secure-update.free-host.com/login" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-amber-400 font-mono rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+      <button onclick="runPhishingScan(event)" class="px-4 py-2 bg-[var(--accent-color)] text-white text-sm rounded-lg font-medium hover:opacity-90 transition whitespace-nowrap">Analyze URL</button>
+    </div>
+    
+    <!-- Result Display -->
+    <div id="phishResult" class="pt-4" style="display: none;">
+      <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Scan Result Analysis</label>
+      <div class="relative">
+        <div id="phishDetails" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] font-mono text-sm space-y-2 pr-10"></div>
+        <button onclick="copyToClipboard('phishDetails')" title="Copy to Clipboard" class="absolute top-2 right-2 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function runPhishingScan(event) {
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Analyzing...';
+
+  const url = document.getElementById('phishUrlInput').value;
+  const resultDiv = document.getElementById('phishResult');
+  const detailsDiv = document.getElementById('phishDetails');
+
+  try {
+    const res = await fetch('/api/detect_phishing', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ url })
+    });
+    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    const data = await res.json();
+    
+    let riskColor = data.risk_score >= 40 ? 'text-rose-400' : 'text-emerald-400';
+    let findingsHTML = data.findings.map(f => `<li>${f}</li>`).join('');
+
+    detailsDiv.innerHTML = `
+      <div><strong>URL:</strong> <span class="text-cyan-400">${data.url}</span></div>
+      <div class="pt-2"><strong>Risk Level:</strong> <span class="font-bold ${riskColor}">${data.risk_level}</span> (${data.risk_score}/100)</div>
+      <ul class="list-disc list-inside pt-2 text-[var(--text-muted)]">${findingsHTML}</ul>
+    `;
+    
+    resultDiv.style.display = 'block';
+    if (data.telemetry) {
+      applyTelemetryPayload(data.telemetry);
+    } else {
+      fetchMetrics();
+    }
+    appendLiveLog(`Phishing scan: ${data.risk_level} (${data.risk_score})`);
+  } catch (error) {
+    detailsDiv.innerHTML = `<span class="text-rose-400">Error: Could not perform scan. ${error.message}</span>`;
+    resultDiv.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
+</script>
+{% endblock %}

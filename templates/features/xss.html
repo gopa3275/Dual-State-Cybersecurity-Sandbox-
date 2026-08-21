@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}XSS Injection Sandbox{% endblock %}
+
+{% block content %}
+<div class="left-column">
+<div id="module-xss" class="glass-card p-6 rounded-xl border border-[var(--border-color)]">
+    <h2 class="text-2xl font-bold text-[var(--text-color)]">02 // XSS Injection Sandbox</h2>
+    <p class="text-[var(--text-muted)] text-sm mt-1">
+        Test script reflection vs. HTML entity escaping sanitization under active Security Mode settings.
+    </p>
+
+    <div class="mt-4 space-y-4">
+        <div>
+            <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)] mb-2">Payload Vector Input</label>
+            <textarea id="xssInput" rows="3" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-amber-400 font-mono rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"><script>alert('XSS Exploit!')</script></textarea>
+        </div>
+
+        <div class="flex gap-3 items-center">
+            <button class="px-4 py-2 bg-[var(--accent-color)] text-white text-sm rounded-lg font-medium hover:opacity-90 transition" onclick="runXssScan(event)">Run XSS Payload Scan</button>
+            <select id="xssPresets" class="flex-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-color)] rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]" onchange="loadXssPreset(this.value)">
+                <option value="">-- Load Preset Vector --</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Output Diagnostic Window -->
+    <div class="mt-6 space-y-2">
+        <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)]">Execution Output Terminal</label>
+        <div class="relative">
+            <div id="xssOutput" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] break-all font-mono text-sm pr-10">Awaiting payload execution...</div>
+            <div class="absolute top-2 right-2">
+                <button onclick="copyToClipboard('xssOutput')" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+                </button>
+            </div>
+        </div>
+        <div id="xssStatusBadge" class="text-sm font-bold"></div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function runXssScan(event) {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'Scanning...';
+
+        const payload = document.getElementById('xssInput').value;
+        const out = document.getElementById('xssOutput');
+        const badge = document.getElementById('xssStatusBadge');
+
+        try {
+            const res = await fetch('/api/xss/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payload, security_on: isSecurityOn })
+            });
+            if (!res.ok) throw new Error(`API Error: ${res.status}`);
+            const data = await res.json();
+
+            out.innerHTML = ''; // Clear previous output
+            if (data.mode === 'SECURE') {
+                out.innerText = data.output; // Securely render as text
+                badge.className = 'text-sm font-bold text-emerald-400';
+            } else {
+                out.innerHTML = data.output; // VULNERABLE: Inject raw HTML
+                badge.className = 'text-sm font-bold text-rose-400';
+            }
+            badge.textContent = `[${data.mode} MODE] ${data.message}`;
+            if (data.telemetry) {
+                applyTelemetryPayload(data.telemetry);
+            } else {
+                fetchMetrics(); // Update global telemetry counters
+            }
+            appendLiveLog(`XSS scan: ${data.mode} - ${data.message}`);
+        } catch (error) {
+            badge.className = 'text-sm font-bold text-rose-400';
+            badge.textContent = `Error: Could not run scan. ${error.message}`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    function loadXssPreset(val) {
+        if (val) document.getElementById('xssInput').value = val;
+    }
+
+    async function populateXssPresets() {
+        try {
+            const res = await fetch('/api/xss/presets');
+            const presets = await res.json();
+            const select = document.getElementById('xssPresets');
+            for (const key in presets) {
+                const option = document.createElement('option');
+                option.value = presets[key];
+                option.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                select.appendChild(option);
+            }
+        } catch (error) {
+            console.error("Could not load XSS presets:", error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', populateXssPresets);
+</script>
+{% endblock %}
