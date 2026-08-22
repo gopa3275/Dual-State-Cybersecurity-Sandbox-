@@ -44,7 +44,7 @@
         {% include 'components/nav_tabs.html' %}
 
         <!-- Main Content Area: single-column on small, two-column on desktop (>=1024px) -->
-        <main class="mt-4">
+        <main class="mt-4 pt-28">
             <div class="w-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-6">
                 <!-- Left: module content (form controls, inputs) -->
                 <section class="left-column">
@@ -209,6 +209,9 @@
             try {
                 const el = document.getElementById('liveLogs');
                 if (!el) return;
+                // Remove placeholder text if it is still present
+                const placeholder = 'No logs yet...';
+                if (el.innerText && el.innerText.trim() === placeholder) el.innerText = '';
                 const now = new Date();
                 const ts = now.toISOString();
                 // Prepend new messages so latest appear on top
@@ -218,12 +221,16 @@
             } catch (e) {
                 /* ignore */
             }
+        }
 
         // addLogEntry: richer helper that includes module, badge, and ARIA announcement
         function addLogEntry(moduleName, message, status) {
             try {
                 const el = document.getElementById('liveLogs');
                 if (!el) return;
+                // Remove placeholder if present before adding a real entry
+                const placeholder = 'No logs yet...';
+                if (el.innerText && el.innerText.trim() === placeholder) el.innerText = '';
                 const now = new Date();
                 const ts = now.toLocaleString();
                 var badgeText = '[INFO]';

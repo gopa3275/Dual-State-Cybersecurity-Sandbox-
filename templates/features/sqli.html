@@ -13,6 +13,13 @@
   <!-- Input Card -->
   <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-4">
     <h3 class="text-lg font-semibold text-[var(--text-color)]">Username Input Vector</h3>
+    <!-- Quick-fill payload badges -->
+    <div class="flex gap-2 items-center overflow-x-auto whitespace-nowrap py-2">
+      <button type="button" class="px-3 py-1 text-xs rounded-md bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)]" onclick="document.getElementById('sqliInput').value = '&#39; OR 1=1 --';">&#39; OR 1=1 --</button>
+      <button type="button" class="px-3 py-1 text-xs rounded-md bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)]" onclick="document.getElementById('sqliInput').value = 'admin\' #'">admin' #</button>
+      <button type="button" class="px-3 py-1 text-xs rounded-md bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)]" onclick="document.getElementById('sqliInput').value = '&#39; UNION SELECT null, null, null --';">&#39; UNION SELECT null, null, null --</button>
+    </div>
+
     <div class="flex gap-3">
       <input id="sqliInput" type="text" value="' OR '1'='1" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-amber-400 font-mono rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
       <button onclick="runSqliScanner(event)" class="px-4 py-2 bg-[var(--accent-color)] text-white text-sm rounded-lg font-medium hover:opacity-90 transition whitespace-nowrap">Execute Query</button>
@@ -46,6 +53,15 @@
       <div class="relative">
         <div class="relative">
                   <pre class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] overflow-x-auto font-mono text-sm text-emerald-400 pr-10"><code id="sqliResults" class="language-json">[]</code></pre>
+                  <!-- Leaked records table (rendered only when vulnerable payload returns rows) -->
+                  <div id="leakedRecordsWrapper" class="mt-3">
+                    <table id="sqliLeakedTable" class="hidden w-full text-sm border-collapse">
+                      <thead class="text-[var(--text-muted)] text-xs uppercase tracking-wider">
+                        <tr class="border-b border-[var(--border-color)]"><th class="text-left px-2 py-1">ID</th><th class="text-left px-2 py-1">Username</th><th class="text-left px-2 py-1">Role</th><th class="text-left px-2 py-1">Exposed Data</th></tr>
+                      </thead>
+                      <tbody id="sqliLeakedBody"></tbody>
+                    </table>
+                  </div>
                   <div class="absolute top-1 right-2">
                   <button onclick="copyToClipboard('sqliResults', this)" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 a 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg></button>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
@@ -110,7 +126,30 @@
               queryDiv.innerText = data.query || "";
               verdictDiv.innerText = data.verdict || data.message;
               verdictDiv.className = isSecurityOn ? "text-sm font-bold text-emerald-400" : "text-sm font-bold text-rose-400";
-              resultsDiv.innerText = JSON.stringify(data.results || [], null, 2);
+              // Results handling: show a friendly message in secure mode, or render leaked table when vulnerable
+              const results = data.results || [];
+              const leakedTable = document.getElementById('sqliLeakedTable');
+              const leakedBody = document.getElementById('sqliLeakedBody');
+              if (data.status === 'SECURE') {
+                  resultsDiv.innerText = '0 rows returned (Query parameterized safely)';
+                  if (leakedTable) leakedTable.classList.add('hidden');
+              } else if (data.status === 'VULNERABLE' && results.length) {
+                  resultsDiv.innerText = JSON.stringify(results, null, 2);
+                  if (leakedBody) {
+                      leakedBody.innerHTML = '';
+                      results.forEach(r => {
+                          const id = r.id ?? '';
+                          const username = r.username ?? '';
+                          const role = r.role ?? '';
+                          const exposed = (r.salary !== undefined && r.salary !== null) ? r.salary : (r.exposed_data || '');
+                          leakedBody.insertAdjacentHTML('beforeend', `<tr class="border-t border-[var(--border-color)]"><td class="px-2 py-1 font-mono">${id}</td><td class="px-2 py-1 font-mono">${username}</td><td class="px-2 py-1">${role}</td><td class="px-2 py-1 font-mono text-emerald-400">${exposed}</td></tr>`);
+                      });
+                  }
+                  if (leakedTable) leakedTable.classList.remove('hidden');
+              } else {
+                  resultsDiv.innerText = JSON.stringify(results, null, 2);
+                  if (leakedTable) leakedTable.classList.add('hidden');
+              }
 
               // AST / Prepared representation
               const astEl = document.getElementById('sqliAST');
