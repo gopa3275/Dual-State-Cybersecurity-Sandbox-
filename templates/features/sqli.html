@@ -6,8 +6,8 @@
 <div class="left-column space-y-6">
   <!-- Module Header -->
   <div class="glass-card p-6 rounded-xl border border-[var(--border-color)]">
-    <h2 class="text-2xl font-bold text-[var(--text-color)]">01 // SQL Injection (SQLi) Exploit Sandbox</h2>
-    <p class="text-[var(--text-muted)] text-sm mt-1">Demonstrates OWASP #1 Vulnerability. In Vulnerable Mode, raw string concatenation allows attackers to bypass query logic using <code>' OR '1'='1</code>.</p>
+    <h2 class="text-2xl font-bold text-[var(--text-color)]">02 // SQL INJECTION</h2>
+        <p class="text-[var(--text-muted)] text-sm mt-1">See how attackers bypass logins and extract database rows. In Vulnerable Mode, raw string concatenation allows payloads like <code>' OR '1'='1</code> to manipulate query logic; switch to Secure Mode to see parameterized queries block the exploit.</p>
   </div>
 
   <!-- Input Card -->
@@ -16,8 +16,8 @@
     <!-- Quick-fill payload badges -->
     <div class="flex gap-2 items-center overflow-x-auto whitespace-nowrap py-2">
       <button type="button" class="px-3 py-1 text-xs rounded-md bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)]" onclick="document.getElementById('sqliInput').value = '&#39; OR 1=1 --';">&#39; OR 1=1 --</button>
-      <button type="button" class="px-3 py-1 text-xs rounded-md bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)]" onclick="document.getElementById('sqliInput').value = 'admin\' #'">admin' #</button>
-      <button type="button" class="px-3 py-1 text-xs rounded-md bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)]" onclick="document.getElementById('sqliInput').value = '&#39; UNION SELECT null, null, null --';">&#39; UNION SELECT null, null, null --</button>
+      <button type="button" class="px-3 py-1 text-xs rounded-md bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)]" onclick="document.getElementById('sqliInput').value = 'admin\' --'">admin' --</button>
+      <button type="button" class="px-3 py-1 text-xs rounded-md bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-primary)]" onclick="document.getElementById('sqliInput').value = '&#39; UNION SELECT id, username, role, salary FROM users --';">&#39; UNION SELECT id, username, role, salary FROM users --</button>
     </div>
 
     <div class="flex gap-3">
@@ -131,7 +131,7 @@
               const leakedTable = document.getElementById('sqliLeakedTable');
               const leakedBody = document.getElementById('sqliLeakedBody');
               if (data.status === 'SECURE') {
-                  resultsDiv.innerText = '0 rows returned (Query parameterized safely)';
+                  resultsDiv.innerText = '0 rows returned — Parameterized Query bound payload as literal string.';
                   if (leakedTable) leakedTable.classList.add('hidden');
               } else if (data.status === 'VULNERABLE' && results.length) {
                   resultsDiv.innerText = JSON.stringify(results, null, 2);
