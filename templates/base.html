@@ -34,7 +34,10 @@
 </head>
 <body class="bg-[var(--bg-primary)] text-[var(--text-color)] font-sans transition-colors duration-300">
 
-    <div class="mx-auto w-full px-4 py-4 max-w-[1440px]">
+    {% set is_welcome_page = request.path in ['/', '/welcome'] %}
+    {% set has_live_logs = show_live_logs is defined and show_live_logs %}
+
+    <div class="{% if is_welcome_page %}mx-auto w-full max-w-7xl px-4 py-4{% else %}mx-auto w-full px-4 py-4 max-w-[1440px]{% endif %}">
         <!-- Sticky Header with Navbar -->
         <header class="sticky top-4 z-50 mb-4">
             {% include 'components/navbar.html' %}
@@ -43,36 +46,38 @@
         <!-- Feature Navigation Tabs -->
         {% include 'components/nav_tabs.html' %}
 
-        <!-- Main Content Area: single-column on small, two-column on desktop (>=1024px) -->
+        <!-- Main Content Area: full-width on landing page, balanced 3-column on tool pages -->
         <main class="mt-4 pt-28 md:pt-32">
-            <div class="w-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-6">
-                <!-- Left: module content (form controls, inputs) -->
-                <section class="left-column">
+            {% if has_live_logs %}
+                <div class="w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <section class="lg:col-span-2 w-full">
+                        {% block content %}{% endblock %}
+                    </section>
+
+                    <aside id="right-rail" class="hidden lg:block lg:col-span-1">
+                        <div class="glass-card p-4 rounded-xl border border-[var(--border-color)] sticky top-20 space-y-4">
+                            <h3 class="text-sm text-[var(--text-muted)] uppercase tracking-wider">Live Logs</h3>
+                            <div id="liveLogs" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[200px] max-h-[60vh] overflow-auto font-mono text-xs text-[var(--text-muted)]">No logs yet...</div>
+
+                            <h3 class="text-sm text-[var(--text-muted)] uppercase tracking-wider">Telemetry</h3>
+                            <div class="flex flex-col gap-2 text-sm">
+                                <div class="flex justify-between"><span class="text-[var(--text-muted)]">Blocked</span><span id="sidebar_attacks_blocked" class="font-mono text-emerald-400">0</span></div>
+                                <div class="flex justify-between"><span class="text-[var(--text-muted)]">Exploited</span><span id="sidebar_flaws_exploited" class="font-mono text-rose-400">0</span></div>
+                                <div class="flex justify-between"><span class="text-[var(--text-muted)]">Threats</span><span id="sidebar_threats_spotted" class="font-mono text-amber-400">0</span></div>
+                            </div>
+
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="document.getElementById('liveLogs').innerText = ''" class="btn text-sm py-1 px-2">Clear Logs</button>
+                                <button onclick="copyToClipboard('liveLogs')" class="btn text-sm py-1 px-2">Copy Logs</button>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            {% else %}
+                <div class="w-full">
                     {% block content %}{% endblock %}
-                </section>
-
-                {% if show_live_logs %}
-                <!-- Right: live logs and telemetry (visible on lg+) -->
-                <aside id="right-rail" class="hidden lg:block">
-                    <div class="glass-card p-4 rounded-xl border border-[var(--border-color)] sticky top-20 space-y-4">
-                        <h3 class="text-sm text-[var(--text-muted)] uppercase tracking-wider">Live Logs</h3>
-                        <div id="liveLogs" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[200px] max-h-[60vh] overflow-auto font-mono text-xs text-[var(--text-muted)]">No logs yet...</div>
-
-                        <h3 class="text-sm text-[var(--text-muted)] uppercase tracking-wider">Telemetry</h3>
-                        <div class="flex flex-col gap-2 text-sm">
-                            <div class="flex justify-between"><span class="text-[var(--text-muted)]">Blocked</span><span id="sidebar_attacks_blocked" class="font-mono text-emerald-400">0</span></div>
-                            <div class="flex justify-between"><span class="text-[var(--text-muted)]">Exploited</span><span id="sidebar_flaws_exploited" class="font-mono text-rose-400">0</span></div>
-                            <div class="flex justify-between"><span class="text-[var(--text-muted)]">Threats</span><span id="sidebar_threats_spotted" class="font-mono text-amber-400">0</span></div>
-                        </div>
-
-                        <div class="flex gap-2 pt-2">
-                            <button onclick="document.getElementById('liveLogs').innerText = ''" class="btn text-sm py-1 px-2">Clear Logs</button>
-                            <button onclick="copyToClipboard('liveLogs')" class="btn text-sm py-1 px-2">Copy Logs</button>
-                        </div>
-                    </div>
-                </aside>
-                {% endif %}
-            </div>
+                </div>
+            {% endif %}
         </main>
     </div>
 
