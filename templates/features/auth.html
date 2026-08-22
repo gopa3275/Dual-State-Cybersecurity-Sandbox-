@@ -20,7 +20,7 @@
       </div>
       <div class="relative">
         <div id="pwdResult" class="font-mono text-sm min-h-[48px] text-[var(--text-muted)] pr-10">Awaiting input...</div>
-        <button onclick="copyToClipboard('pwdResult')" title="Copy to Clipboard" class="absolute top-0 right-0 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+        <button onclick="copyToClipboard('pwdResult', this)" title="Copy to Clipboard" class="absolute top-0 right-0 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
         </button>
       </div>
@@ -35,7 +35,7 @@
         <div id="bruteResult" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-amber-400 font-mono text-xs p-3 rounded-lg min-h-[48px] break-all pr-10">
           Click button to trigger attempt sequence...
         </div>
-        <button onclick="copyToClipboard('bruteResult')" title="Copy to Clipboard" class="absolute top-2 right-2 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+        <button onclick="copyToClipboard('bruteResult', this)" title="Copy to Clipboard" class="absolute top-2 right-2 p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
         </button>
       </div>

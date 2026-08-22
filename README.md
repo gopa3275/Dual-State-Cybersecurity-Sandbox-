@@ -3,6 +3,15 @@ Dual-State Cybersecurity Sandbox & Security Testing Lab
 
 An interactive, full-stack cybersecurity training environment and security testing lab built using Python Flask and Tailwind CSS. This suite demonstrates critical OWASP Top 10 web application vulnerabilities side-by-side with real-time programmatic defensive mitigations, forensic log indexing, and system state integrity audits.
 
+## Quick start
+
+1. Create and activate a virtual environment.
+2. Install dependencies: `py -m pip install -r requirements.txt`
+3. Run the app: `py app.py`
+4. Open `http://localhost:5000/` in a browser.
+
+Set `SECRET_KEY` in the environment if you want a stable session secret for a longer-lived deployment.
+
 The primary engine behavior depends entirely on the state of the Global Security Protection Switch at the top of the interface:
 
                   +-----------------------------------+

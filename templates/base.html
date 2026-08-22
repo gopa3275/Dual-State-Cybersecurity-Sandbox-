@@ -10,6 +10,27 @@
 
     <!-- Shared Styles & Fonts -->
     {% include 'components/styles.html' %}
+    <!-- Prism.js syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" integrity="" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js" integrity="" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js" integrity="" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js" integrity="" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-diff.min.js" integrity="" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" integrity="" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-http.min.js" integrity="" crossorigin="anonymous"></script>
+    <script>
+        // Expose a simple helper to re-run Prism highlighting after dynamic DOM updates
+        function highlightCode() {
+            try {
+                if (window.Prism && typeof Prism.highlightAll === 'function') {
+                    Prism.highlightAll();
+                }
+            } catch (e) {
+                console.error('Prism highlight failed', e);
+            }
+        }
+    </script>
 </head>
 <body class="bg-[var(--bg-primary)] text-[var(--text-color)] font-sans transition-colors duration-300">
 
@@ -215,10 +236,73 @@
             }
         }
 
-        // Global utility to copy text from an element
-        function copyToClipboard(elementId) {
-            const text = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(text).then(() => console.log('Copied!'), () => console.error('Copy failed'));
+        // Global utility to copy text from an element with feedback and fallback support
+        // Usage: copyToClipboard('elementId', thisButtonElement)
+        function copyToClipboard(elementId, btn) {
+            const el = document.getElementById(elementId);
+            const text = el ? (el.innerText || el.textContent || '') : '';
+
+            function setAriaMessage(msg) {
+                try {
+                    const aria = document.getElementById('ariaLive');
+                    if (aria) aria.textContent = msg;
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            function showFeedback(button) {
+                if (!button) return;
+                try {
+                    if (!button.dataset.origHtml) button.dataset.origHtml = button.innerHTML;
+                    button.innerHTML = '<span class="px-2 py-0.5 rounded text-white" style="background-color:#16a34a">Copied!</span>';
+                    button.classList.add('ring-2','ring-green-300');
+                    setAriaMessage('Copied to clipboard');
+                    setTimeout(() => {
+                        button.innerHTML = button.dataset.origHtml;
+                        button.classList.remove('ring-2','ring-green-300');
+                        delete button.dataset.origHtml;
+                        setAriaMessage('');
+                    }, 1500);
+                } catch (e) {
+                    // ignore UI feedback errors
+                }
+            }
+
+            function fallbackCopy() {
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showFeedback(btn);
+                } catch (e) {
+                    if (btn) btn.innerText = 'Copy failed';
+                    setAriaMessage('Copy failed');
+                    console.error('Fallback copy failed', e);
+                }
+            }
+
+            if (!text) {
+                if (btn) {
+                    // quick visual feedback when nothing to copy
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = 'Nothing to copy';
+                    setAriaMessage('Nothing to copy');
+                    setTimeout(() => { btn.innerHTML = orig; setAriaMessage(''); }, 1200);
+                }
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => { showFeedback(btn); }).catch(() => { fallbackCopy(); });
+            } else {
+                fallbackCopy();
+            }
         }
 
         // Initial state setup on page load
@@ -241,6 +325,9 @@
             fetchMetrics();
         });
     </script>
+
+    <!-- ARIA live region for announcements (screen-reader only) -->
+    <div id="ariaLive" aria-live="polite" aria-atomic="true" class="sr-only" style="position:fixed; left:-9999px; width:1px; height:1px; overflow:hidden;"> </div>
 
     <!-- Page-specific Scripts -->
     {% block scripts %}{% endblock %}

@@ -63,4 +63,4 @@ def fetch_url_content():
         
         return jsonify({"url": url, "content": content, "status_code": response.status_code, "telemetry": get_session_telemetry()})
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Could not fetch URL: {str(e)}", "telemetry": get_session_telemetry()}), 500}
+        return jsonify({"error": f"Could not fetch URL: {str(e)}", "telemetry": get_session_telemetry()}), 500

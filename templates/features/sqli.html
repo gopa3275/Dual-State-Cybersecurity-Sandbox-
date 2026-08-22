@@ -25,74 +25,214 @@
     <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-3">
       <h3 class="text-lg font-semibold text-[var(--text-color)]">Executed SQL Query</h3>
       <div class="relative">
-        <div id="sqliQuery" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] break-all font-mono text-sm text-cyan-400 pr-10">Awaiting query input...</div>
+        <div class="relative">
+        <pre class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] break-all font-mono text-sm text-cyan-400 pr-10"><code id="sqliQuery" class="language-sql">Awaiting query input...</code></pre>
         <div class="absolute top-1 right-2">
-          <button onclick="copyToClipboard('sqliQuery')" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+          <button onclick="copyToClipboard('sqliQuery', this)" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 a 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg></button>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 a 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
           </button>
         </div>
       </div>
       <div id="sqliVerdict" class="text-sm font-bold"></div>
+        <div class="mt-3">
+            <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)]">Parsed Query / AST</label>
+            <pre class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[80px] font-mono text-sm"><code id="sqliAST" class="language-json">-</code></pre>
+        </div>
     </div>
 
     <!-- Database Records Card -->
     <div class="glass-card p-6 rounded-xl border border-[var(--border-color)] space-y-3">
       <h3 class="text-lg font-semibold text-[var(--text-color)]">Returned Database Records</h3>
       <div class="relative">
-        <pre id="sqliResults" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] overflow-x-auto font-mono text-sm text-emerald-400 pr-10">[]</pre>
-        <div class="absolute top-1 right-2">
-          <button onclick="copyToClipboard('sqliResults')" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+        <div class="relative">
+                  <pre class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] overflow-x-auto font-mono text-sm text-emerald-400 pr-10"><code id="sqliResults" class="language-json">[]</code></pre>
+                  <div class="absolute top-1 right-2">
+                  <button onclick="copyToClipboard('sqliResults', this)" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 a 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg></button>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
           </button>
         </div>
       </div>
-    </div>
-  </div>
+
+      <!-- Remediation & Patch Diff Panel -->
+      <div class="mt-4 border-t border-[var(--border-color)] pt-4">
+          <button id="remedToggle" class="text-sm font-medium text-[var(--accent-color)] mb-2" onclick="toggleRemediation()">▸ Remediation & Patch Diff</button>
+          <div id="remediationPanel" class="hidden space-y-3">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                      <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)]">Vulnerable Snippet</label>
+                      <div class="relative">
+                      <pre class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[120px] font-mono text-xs overflow-auto"><code id="vulnCode" class="language-python">-</code></pre>
+                      <div class="absolute top-1 right-2"><button onclick="copyToClipboard('vulnCode', this)" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 a 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg></button></div>
+                      </div>
+                  </div>
+                  <div>
+                      <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)]">Secure Patch</label>
+                      <div class="relative">
+                      <pre class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[120px] font-mono text-xs overflow-auto"><code id="secureCode" class="language-python">-</code></pre>
+                      <div class="absolute top-1 right-2"><button onclick="copyToClipboard('secureCode', this)" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 a 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg></button></div>
+                      </div>
+              </div>
+              <div>
+                  <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)]">Diff (Unified)</label>
+                  <div class="relative">
+                  <div id="sqliDiff" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[80px] font-mono text-xs overflow-auto">-</div>
+                  <div class="absolute top-1 right-2"><button onclick="copyToClipboard('sqliUnifiedRaw', this)" title="Copy Diff" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 a 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg></button></div>
+                  </div>
+                  <pre style="display:none"><code id="sqliUnifiedRaw" class="language-diff"></code></pre>
+              </div>
+          </div>
+      </div>
+
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    async function runSqliScanner(event) {
-        const btn = event.target;
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = 'Executing...';
+      async function runSqliScanner(event) {
+          const btn = event.target;
+          const originalText = btn.innerHTML;
+          btn.disabled = true;
+          btn.innerHTML = 'Executing...';
 
-        const username = document.getElementById('sqliInput').value;
-        const verdictDiv = document.getElementById('sqliVerdict');
-        const queryDiv = document.getElementById('sqliQuery');
-        const resultsDiv = document.getElementById('sqliResults');
+          const username = document.getElementById('sqliInput').value;
+          const verdictDiv = document.getElementById('sqliVerdict');
+          const queryDiv = document.getElementById('sqliQuery');
+          const resultsDiv = document.getElementById('sqliResults');
 
-        try {
-            const res = await fetch('/api/sqli_scan', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ username, security_on: isSecurityOn })
-            });
-            const data = await res.json();
+          try {
+              const res = await fetch('/api/sqli_scan', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({ username, security_on: isSecurityOn })
+              });
+              const data = await res.json();
 
-            queryDiv.innerText = data.query || "";
-            verdictDiv.innerText = data.verdict || data.message;
-            verdictDiv.className = isSecurityOn ? "text-sm font-bold text-emerald-400" : "text-sm font-bold text-rose-400";
-            resultsDiv.innerText = JSON.stringify(data.results || [], null, 2);
-            if (data.telemetry) {
-                applyTelemetryPayload(data.telemetry);
-            } else {
-                fetchMetrics();
-            }
-            // Add a short live-log entry
-            appendLiveLog(`SQLi scan: ${data.status || 'unknown'} - ${data.verdict || data.message || ''}`);
+              queryDiv.innerText = data.query || "";
+              verdictDiv.innerText = data.verdict || data.message;
+              verdictDiv.className = isSecurityOn ? "text-sm font-bold text-emerald-400" : "text-sm font-bold text-rose-400";
+              resultsDiv.innerText = JSON.stringify(data.results || [], null, 2);
+
+              // AST / Prepared representation
+              const astEl = document.getElementById('sqliAST');
+              if (astEl) {
+                  if (data.ast) astEl.innerText = JSON.stringify(data.ast, null, 2);
+                  else if (data.prepared) astEl.innerText = JSON.stringify(data.prepared, null, 2);
+                  else astEl.innerText = '-';
+              }
+              // Re-run syntax highlighting for newly injected AST/query/results
+              try { highlightCode(); } catch (e) { /* ignore */ }
+               
+
+              // Ensure diff2html is loaded for visual diffs
+              function ensureDiff2HtmlLoaded() {
+                  return new Promise((resolve, reject) => {
+                      if (window.Diff2Html) return resolve();
+                      if (!document.getElementById('diff2html-css')) {
+                          const link = document.createElement('link');
+                          link.rel = 'stylesheet';
+                          link.href = 'https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.7/diff2html.min.css';
+                          link.id = 'diff2html-css';
+                          document.head.appendChild(link);
+                      }
+                      if (document.getElementById('diff2html-js')) {
+                          // script already present but Diff2Html may not be ready yet
+                          const check = () => { if (window.Diff2Html) resolve(); else setTimeout(check, 50); };
+                          check();
+                          return;
+                      }
+                      const s = document.createElement('script');
+                      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.7/diff2html.min.js';
+                      s.id = 'diff2html-js';
+                      s.onload = () => resolve();
+                      s.onerror = () => reject(new Error('Failed to load diff2html'));
+                      document.head.appendChild(s);
+                  });
+              }
+
+              // Remediation diff population
+              const vulnEl = document.getElementById('vulnCode');
+              const secureEl = document.getElementById('secureCode');
+              const diffEl = document.getElementById('sqliDiff');
+              if (vulnEl) vulnEl.innerText = data.code_vulnerable || data.code || '-';
+              if (secureEl) secureEl.innerText = data.code_secure || data.code || '-';
+              if (diffEl) {
+                  const unified = data.unified_diff || '';
+                  if (unified) {
+                      // Render visual diff with diff2html
+                      ensureDiff2HtmlLoaded().then(() => {
+                          try {
+                              const diffHtml = Diff2Html.html(unified, {drawFileList: false, matching: 'lines', outputFormat: 'line-by-line'});
+                              diffEl.innerHTML = diffHtml;
+                              // Also populate a raw unified block for Prism highlighting fallback
+                              const rawEl = document.getElementById('sqliUnifiedRaw');
+                              if (rawEl) {
+                                  rawEl.textContent = unified;
+                                  rawEl.parentElement.style.display = 'none';
+                              }
+                              // After diff2html render, attempt to highlight any code blocks
+                              highlightCode();
+                          } catch (e) {
+                              // fallback to plain text
+                              diffEl.textContent = unified;
+                              const rawEl = document.getElementById('sqliUnifiedRaw');
+                              if (rawEl) { rawEl.textContent = unified; rawEl.parentElement.style.display = 'block'; }
+                              highlightCode();
+                          }
+                      }).catch(() => {
+                          diffEl.textContent = unified;
+                          const rawEl = document.getElementById('sqliUnifiedRaw');
+                          if (rawEl) { rawEl.textContent = unified; rawEl.parentElement.style.display = 'block'; }
+                          highlightCode();
+                      });
+                  } else {                      // Fallback simple unified diff-like preview (add +/- markers)
+                      const vuln = (data.code_vulnerable || data.code || '').split('\n');
+                      const sec = (data.code_secure || data.code || '').split('\n');
+                      let diffLines = [];
+                      const maxLen = Math.max(vuln.length, sec.length);
+                      for (let i=0;i<maxLen;i++) {
+                          const a = vuln[i] || '';
+                          const b = sec[i] || '';
+                          if (a === b) diffLines.push(' ' + a);
+                          else {
+                              if (a) diffLines.push('-' + a);
+                              if (b) diffLines.push('+' + b);
+                          }
+                      }
+                      diffEl.innerText = diffLines.join('\n');
+                  }
+              }
+
+              if (data.telemetry) {
+                  applyTelemetryPayload(data.telemetry);
+              } else {
+                  fetchMetrics();
+              }
+
+              // Add a short live-log entry
+              appendLiveLog(`SQLi scan: ${data.status || 'unknown'} - ${data.verdict || data.message || ''}`);
             
-        } catch (error) {
-            verdictDiv.className = 'text-sm font-bold text-rose-400';
-            verdictDiv.innerText = `Error: Could not execute query. ${error.message}`;
-            queryDiv.innerText = 'N/A';
-            resultsDiv.innerText = '[]';
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
-    }
+          } catch (error) {
+              verdictDiv.className = 'text-sm font-bold text-rose-400';
+              verdictDiv.innerText = `Error: Could not execute query. ${error.message}`;
+              queryDiv.innerText = 'N/A';
+              resultsDiv.innerText = '[]';
+          } finally {
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+          }
+      }
+
+      function toggleRemediation() {
+          const panel = document.getElementById('remediationPanel');
+          const btn = document.getElementById('remedToggle');
+          if (!panel || !btn) return;
+          if (panel.classList.contains('hidden')) {
+              panel.classList.remove('hidden');
+              btn.textContent = '▾ Remediation & Patch Diff';
+          } else {
+              panel.classList.add('hidden');
+              btn.textContent = '▸ Remediation & Patch Diff';
+          }
+      }
 </script>
 {% endblock %}

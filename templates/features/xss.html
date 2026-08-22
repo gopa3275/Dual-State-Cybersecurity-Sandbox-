@@ -30,12 +30,42 @@
         <div class="relative">
             <div id="xssOutput" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[60px] break-all font-mono text-sm pr-10">Awaiting payload execution...</div>
             <div class="absolute top-2 right-2">
-                <button onclick="copyToClipboard('xssOutput')" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
+                <button onclick="copyToClipboard('xssOutput', this)" title="Copy to Clipboard" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
                 </button>
             </div>
         </div>
         <div id="xssStatusBadge" class="text-sm font-bold"></div>
+
+    <!-- Live sandboxed preview: vulnerable payloads execute only inside this iframe -->
+    <div class="mt-3">
+        <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)]">Live Sandbox Preview</label>
+        <iframe id="xssSandbox" class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg min-h-[120px]" sandbox="" title="XSS Sandbox Preview"></iframe>
+    </div>
+
+    <!-- Network Inspector: collapsible panel showing simulated raw HTTP request/response and CSP status -->
+    <div class="mt-4 border-t border-[var(--border-color)] pt-4">
+        <button id="inspectorToggle" class="text-sm font-medium text-[var(--accent-color)] mb-2" onclick="toggleInspector()">▸ Network Inspector</button>
+        <div id="networkInspector" class="hidden space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)]">Raw HTTP Request</label>
+                    <div class="relative">
+                    <pre class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[120px] font-mono text-xs overflow-auto"><code id="requestRaw" class="language-bash">-</code></pre>
+                    <div class="absolute top-1 right-2"><button onclick="copyToClipboard('requestRaw', this)" title="Copy Request" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 a 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg></button></div>
+                    </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs uppercase tracking-wider text-[var(--text-muted)]">Raw HTTP Response</label>
+                            <div class="relative">
+                            <pre class="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] p-3 rounded-lg min-h-[120px] font-mono text-xs overflow-auto"><code id="responseRaw" class="language-bash">-</code></pre>
+                            <div class="absolute top-1 right-2"><button onclick="copyToClipboard('responseRaw', this)" title="Copy Response" class="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-color)] rounded-md hover:bg-[var(--bg-primary)] transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 a 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg></button></div>
+                            </div>
+                            <div id="cspBadge" class="mt-2 text-sm font-bold"></div>
+                        </div>
+            </div>
+        </div>
+    </div>
     </div>
 </div>
 </div>
@@ -43,6 +73,29 @@
 
 {% block scripts %}
 <script>
+    // Utility to escape HTML for safe text rendering in Secure mode
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // Sets the sandbox iframe content and sandbox attributes depending on mode
+    function setSandboxContent(iframe, content, allowScripts) {
+        if (!iframe) return;
+        if (allowScripts) {
+            iframe.setAttribute('sandbox', 'allow-scripts');
+        } else {
+            // Fully restrictive sandbox (no scripts)
+            iframe.setAttribute('sandbox', '');
+        }
+        // Minimal HTML wrapper; use srcdoc so the payload doesn't leave the iframe
+        iframe.srcdoc = `<!doctype html><meta charset="utf-8"><title>Sandbox Preview</title><body>${content}</body>`;
+    }
+
     async function runXssScan(event) {
         const btn = event.target;
         const originalText = btn.innerHTML;
@@ -52,25 +105,33 @@
         const payload = document.getElementById('xssInput').value;
         const out = document.getElementById('xssOutput');
         const badge = document.getElementById('xssStatusBadge');
+        const iframe = document.getElementById('xssSandbox');
 
         try {
             const res = await fetch('/api/xss/scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ payload, security_on: isSecurityOn })
+                body: JSON.stringify({ payload })
             });
             if (!res.ok) throw new Error(`API Error: ${res.status}`);
             const data = await res.json();
 
-            out.innerHTML = ''; // Clear previous output
-            if (data.mode === 'SECURE') {
-                out.innerText = data.output; // Securely render as text
-                badge.className = 'text-sm font-bold text-emerald-400';
-            } else {
-                out.innerHTML = data.output; // VULNERABLE: Inject raw HTML
-                badge.className = 'text-sm font-bold text-rose-400';
-            }
+            // Update badge
             badge.textContent = `[${data.mode} MODE] ${data.message}`;
+            if (data.mode === 'SECURE') {
+                badge.className = 'text-sm font-bold text-emerald-400';
+                // Render sanitized content as plain text inside the output
+                out.innerText = data.output;
+                // Show a text preview inside an iframe without scripts
+                const escaped = `<pre style="white-space:pre-wrap; font-family:monospace;">${escapeHtml(data.output)}</pre>`;
+                setSandboxContent(iframe, escaped, false);
+            } else {
+                badge.className = 'text-sm font-bold text-rose-400';
+                // Vulnerable: show the raw output in the iframe with scripts allowed (contained by sandbox)
+                out.innerText = 'Rendered in sandbox preview below (isolated)';
+                setSandboxContent(iframe, data.output, true);
+            }
+
             if (data.telemetry) {
                 applyTelemetryPayload(data.telemetry);
             } else {
@@ -88,6 +149,44 @@
 
     function loadXssPreset(val) {
         if (val) document.getElementById('xssInput').value = val;
+    }
+
+    function toggleInspector() {
+        const panel = document.getElementById('networkInspector');
+        const btn = document.getElementById('inspectorToggle');
+        if (!panel || !btn) return;
+        if (panel.classList.contains('hidden')) {
+            panel.classList.remove('hidden');
+            btn.textContent = '▾ Network Inspector';
+        } else {
+            panel.classList.add('hidden');
+            btn.textContent = '▸ Network Inspector';
+        }
+    }
+
+    function renderNetworkInspector(mode, payload, responseContent) {
+        const reqEl = document.getElementById('requestRaw');
+        const resEl = document.getElementById('responseRaw');
+        const cspBadge = document.getElementById('cspBadge');
+        if (!reqEl || !resEl || !cspBadge) return;
+
+        const host = location.host || 'localhost';
+        const reqHeaders = `POST /api/xss/scan HTTP/1.1\nHost: ${host}\nUser-Agent: CyberSandbox/1.0\nContent-Type: application/json\nContent-Length: ${payload ? payload.length : 0}\n\n${payload || ''}`;
+
+        let resHeaders;
+        if (mode === 'SECURE') {
+            resHeaders = `HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\nContent-Security-Policy: default-src 'self'; script-src 'self'\nX-Content-Type-Options: nosniff\n\n${responseContent || ''}`;
+            cspBadge.className = 'text-sm font-bold text-emerald-400';
+            cspBadge.textContent = '[CSP ACTIVE]';
+        } else {
+            resHeaders = `HTTP/1.1 200 OK\nContent-Type: text/html\n\n${responseContent || ''}`;
+            cspBadge.className = 'text-sm font-bold text-rose-400';
+            cspBadge.textContent = '[CSP MISSING / UNSAFE-INLINE]';
+        }
+
+        reqEl.textContent = reqHeaders;
+        resEl.textContent = resHeaders;
+        try { highlightCode(); } catch (e) { /* ignore */ }
     }
 
     async function populateXssPresets() {
