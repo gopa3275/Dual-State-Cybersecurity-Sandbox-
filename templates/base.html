@@ -47,7 +47,7 @@
         {% include 'components/nav_tabs.html' %}
 
         <main class="container mx-auto px-4 pt-28 md:pt-32 pb-12 max-w-7xl">
-            {% if request.path == '/' or request.path == '/welcome' or request.path == '/csrf' or request.path == '/tools' or request.path == '/ctf' %}
+            {% if request.path == '/' or request.path == '/welcome' %}
                 <!-- Full-Width Views -->
                 <div class="w-full">
                     {% block content %}{% endblock %}
