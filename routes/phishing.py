@@ -8,7 +8,7 @@ phishing_bp = Blueprint('phishing', __name__)
 
 @phishing_bp.route('/phishing')
 def phishing_page():
-    return render_template('features/phishing.html', active_page='phishing')
+    return render_template('features/phishing.html', active_page='phishing', show_live_logs=True)
 
 @phishing_bp.route('/api/detect_phishing', methods=['POST'])
 @phishing_bp.route('/api/phishing/scan', methods=['POST'])

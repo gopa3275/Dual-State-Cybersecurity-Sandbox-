@@ -9,7 +9,7 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/auth')
 def auth_page():
     """Renders the Authentication Audit feature page."""
-    return render_template('features/auth.html', active_page='auth')
+    return render_template('features/auth.html', active_page='auth', show_live_logs=True)
 
 # --- Password Entropy Logic ---
 def calculate_entropy(password):

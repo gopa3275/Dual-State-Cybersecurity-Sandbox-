@@ -8,7 +8,7 @@ forensics_bp = Blueprint('forensics', __name__)
 
 @forensics_bp.route('/forensics')
 def forensics_page():
-    return render_template('features/forensics.html', active_page='forensics')
+    return render_template('features/forensics.html', active_page='forensics', show_live_logs=True)
 
 def calculate_hash_from_content(content):
     """Calculates the SHA-256 hash of a string content."""

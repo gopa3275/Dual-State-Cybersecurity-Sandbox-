@@ -14,7 +14,7 @@ XSS_PRESETS = {
 @xss_bp.route('/xss')
 def xss_page():
     """Renders the XSS feature page, passing the active page for sidebar highlighting."""
-    return render_template('features/xss.html', active_page='xss')
+    return render_template('features/xss.html', active_page='xss', show_live_logs=True)
 
 @xss_bp.route('/api/xss/presets', methods=['GET'])
 def get_presets():

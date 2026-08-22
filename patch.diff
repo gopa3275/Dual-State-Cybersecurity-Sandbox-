@@ -1,0 +1,419 @@
+﻿--- a/templates/base.html
++++ b/templates/base.html
+@@ -1,200 +1,260 @@
+ (context unchanged until the place where the live-logs sidebar is)
+ 
+-<!-- Live Logs / Telemetry sidebar (always visible) -->
+-<aside id="liveLogsSidebar" class="sidebar">
+-  <h3>Live Logs</h3>
+-  <div id="liveLogs" class="logs"></div>
+-</aside>
++<!-- Live Logs / Telemetry sidebar: render only on interactive lab pages -->
++{% if show_live_logs %}
++<aside id="liveLogsSidebar" class="sidebar" aria-label="Live logs and telemetry">
++  <h3>Live Logs</h3>
++  <div id="liveLogs" class="logs" role="log" aria-live="polite" aria-relevant="additions"></div>
++  <!-- telemetry snapshot area (kept small, updated from applyTelemetryPayload) -->
++  <div id="telemetrySnapshot" class="telemetry-snapshot" aria-hidden="false"></div>
++</aside>
++{% endif %}
++
++<!-- Global accessibility region for copy / small announcements -->
++<div id="ariaLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
++
++<!-- Global helpers inserted near the bottom of the base template -->
++<script>
++/* Global: addLogEntry(moduleName, message, status)
++   - moduleName: string (e.g., 'sqli', 'xss')
++   - message: string
++   - status: 'exploited' | 'defense' | 'info' (affects badge)
++   Prepends a formatted log entry to #liveLogs if present */
++window.addLogEntry = function(moduleName, message, status) {
++  try {
++    var logs = document.getElementById('liveLogs');
++    if (!logs) return; // No-op if live logs are not present on this page
++
++    var now = new Date();
++    var ts = now.toLocaleString();
++
++    var badgeText = '[INFO]';
++    var badgeClass = 'log-badge-info';
++    if (status === 'exploited') { badgeText = '[EXPLOITED]'; badgeClass = 'log-badge-danger'; }
++    else if (status === 'defense') { badgeText = '[DEFENSE TRIGGERED]'; badgeClass = 'log-badge-success'; }
++
++    var entry = document.createElement('div');
++    entry.className = 'log-entry';
++    entry.innerHTML =
++      '<span class="log-ts">' + ts + '</span> ' +
++      '<span class="log-badge ' + badgeClass + '">' + badgeText + '</span> ' +
++      '<strong>' + (moduleName || 'core') + '</strong>: ' +
++      '<span class="log-msg">' + (message || '') + '</span>';
++
++    // Prepend so latest appear at top (if prepend not supported, fallback to insertBefore)
++    if (logs.firstChild) logs.insertBefore(entry, logs.firstChild);
++    else logs.appendChild(entry);
++  } catch (e) { console.error('addLogEntry failed', e); }
++};
++
++/* Lightweight telemetry result application helper (client-side) — used by dynamic UI code */
++window.applyTelemetryPayload = window.applyTelemetryPayload || function(t) {
++  try {
++    if (!t) return;
++    // Example: update a telemetry snapshot element and optionally topbar badges
++    var el = document.getElementById('telemetrySnapshot');
++    if (el) {
++      el.innerHTML = '<div class="telemetry-row">Attacks blocked: <strong>' + (t.attacks_blocked||0) + '</strong></div>' +
++                     '<div class="telemetry-row">Flaws exploited: <strong>' + (t.flaws_exploited||0) + '</strong></div>';
++    }
++    // Optionally update topbar counters if those elements exist
++    var tb = document.getElementById('topbarAttacksBlocked');
++    if (tb) tb.textContent = t.attacks_blocked || 0;
++    var tf = document.getElementById('topbarFlawsExploited');
++    if (tf) tf.textContent = t.flaws_exploited || 0;
++  } catch(e) { console.error('applyTelemetryPayload failed', e); }
++};
++</script>
++
+ (the rest of base.html unchanged)
+
+--- a/templates/index.html
++++ b/templates/index.html
+@@ -1,200 +1,220 @@
+-{% extends "base.html" %}
+-{% block content %}
+-<div class="container">
+-  <div class="welcome">
+-    <h1>Welcome</h1>
+-    <p>Introductory text</p>
+-    <a href="/sqli" class="btn btn-primary">Try SQLi</a>
+-  </div>
+-</div>
+-{% endblock %}
++{% extends "base.html" %}
++{# Landing page should NOT show live logs or telemetry #}
++{% set show_live_logs = false %}
++{% block content %}
++<div class="hero full-width-hero">
++  <div class="hero-inner container">
++    <h1 class="hero-title">Dual-State Cybersecurity Sandbox</h1>
++    <p class="hero-sub">Learn attacks and defenses in a safe, interactive environment.</p>
++    <div class="hero-actions">
++      <a href="/sqli" class="btn btn-primary">Explore SQLi Lab</a>
++      <a href="/xss" class="btn btn-secondary">Explore XSS Lab</a>
++    </div>
++  </div>
++</div>
++{% endblock %}
+
+--- a/routes/sqli.py
++++ b/routes/sqli.py
+@@ -1,200 +1,260 @@
+ (file header/context unchanged)
+ 
+-from flask import Blueprint, request, jsonify, render_template
+-from .some_helper import init_sqli_db
+-
+-sqli_bp = Blueprint('sqli', __name__, url_prefix='/sqli')
+-
+-@sqli_bp.route('/')
+-def index():
+-    return render_template('features/sqli.html')
+-
+-@sqli_bp.route('/api/scan', methods=['POST'])
+-def scan():
+-    # existing logic...
+-    return jsonify(result)
++from flask import Blueprint, request, jsonify, render_template, session
++from .some_helper import init_sqli_db, get_session_telemetry, inc_telemetry_blocked, inc_telemetry_exploited
++
++sqli_bp = Blueprint('sqli', __name__, url_prefix='/sqli')
++
++@sqli_bp.route('/')
++def index():
++    # page requires live logs
++    return render_template('features/sqli.html', show_live_logs=True)
++
++@sqli_bp.route('/api/scan', methods=['POST'])
++def scan():
++    """
++    Expected: request.json contains { input: '...' }
++    Returns a consistent shape:
++      { status: 'ok'|'error', blocked: bool, message: str, telemetry: {...}, data: {...} }
++    """
++    try:
++      payload = request.json or {}
++      user_input = payload.get('input', '')
++      # Setup DB, run simulated query
++      db = init_sqli_db()
++
++      # mode determination - reuse whatever global/session toggle exists
++      secure = session.get('security_on', True)
++      if secure:
++        # Create prepared query representation (no leaked rows)
++        prepared_query = "SELECT id, username FROM users WHERE username = ?"
++        bound_values = [user_input]
++        data = {
++          'mode': 'secure',
++          'prepared_query': prepared_query,
++          'bound_values': bound_values,
++          'leaked_rows': []
++        }
++        inc_telemetry_blocked()  # increment attacks_blocked
++        status = 'ok'
++        blocked = True
++        msg = 'Secure mode executed (parameterized).'
++      else:
++        # Vulnerable concatenation (simulate leak)
++        raw_query = "SELECT id, username FROM users WHERE username = '%s'" % user_input
++        # Simulate AST tokens and leaked rows
++        leaked = [{'id': 1, 'username': 'alice'}, {'id': 2, 'username': 'bob'}] if "' OR '1'='1" in user_input else []
++        data = {
++          'mode': 'vulnerable',
++          'raw_query': raw_query,
++          'ast': {'type': 'concat', 'tokens': ['SELECT','WHERE','concat']},
++          'leaked_rows': leaked
++        }
++        if leaked:
++          inc_telemetry_exploited()
++        status = 'ok'
++        blocked = False
++        msg = 'Vulnerable mode executed.'
++
++      telemetry = get_session_telemetry()
++      return jsonify({'status': status, 'blocked': blocked, 'message': msg, 'telemetry': telemetry, 'data': data})
++    except Exception as e:
++      telemetry = get_session_telemetry()
++      return jsonify({'status': 'error', 'blocked': False, 'message': str(e), 'telemetry': telemetry, 'data': {}}), 500
++
+ (rest of file unchanged)
+
+--- a/routes/xss.py
++++ b/routes/xss.py
+@@ -1,200 +1,220 @@
+ (header/context)
+-from flask import Blueprint, request, render_template, jsonify
+-@xss_bp.route('/')
+-def index():
+-  return render_template('features/xss.html')
+-
+-@xss_bp.route('/api/scan', methods=['POST'])
+-def scan():
+-  # older behavior...
+-  return jsonify(result)
++from flask import Blueprint, request, render_template, jsonify, session
++from .some_helper import get_session_telemetry, inc_telemetry_blocked, inc_telemetry_exploited
++
++@xss_bp.route('/')
++def index():
++  return render_template('features/xss.html', show_live_logs=True)
++
++@xss_bp.route('/api/scan', methods=['POST'])
++def scan():
++  try:
++    payload = request.json.get('payload','')
++    secure = session.get('security_on', True)
++    if secure:
++      # encode output, simulate CSP active
++      output = escape(payload) # use your existing escape helper
++      inc_telemetry_blocked()
++      blocked = True
++      msg = 'Payload sanitized (secure mode).'
++      mode = 'secure'
++    else:
++      # echo into iframe (sandboxed on client)
++      output = payload
++      # If payload includes script markers consider exploited
++      if '<script' in payload.lower():
++        inc_telemetry_exploited()
++        exploited = True
++      blocked = False
++      msg = 'Payload rendered (vulnerable mode).'
++      mode = 'vulnerable'
++
++    telemetry = get_session_telemetry()
++    return jsonify({'status':'ok','blocked':blocked,'message':msg,'telemetry':telemetry,'data':{'mode':mode,'output':output}})
++  except Exception as e:
++    telemetry = get_session_telemetry()
++    return jsonify({'status':'error','blocked':False,'message':str(e),'telemetry':telemetry,'data':{}}),500
++
+ (rest unchanged)
+
+--- a/routes/auth.py
++++ b/routes/auth.py
+@@ -1,120 +1,160 @@
+ (file header)
+-from flask import Blueprint, request, jsonify, render_template
+-auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+-
+-@auth_bp.route('/')
+-def index():
+-  return render_template('features/auth.html')
+-
+-@auth_bp.route('/api/audit', methods=['POST'])
+-def audit():
+-  # old behavior...
+-  return jsonify(result)
++from flask import Blueprint, request, jsonify, render_template, session
++from .some_helper import get_session_telemetry, inc_telemetry_blocked, inc_telemetry_exploited
++
++auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
++
++@auth_bp.route('/')
++def index():
++    return render_template('features/auth.html', show_live_logs=True)
++
++@auth_bp.route('/api/audit', methods=['POST'])
++def audit():
++    try:
++      data = request.json or {}
++      username = data.get('username')
++      password = data.get('password')
++      secure = session.get('security_on', True)
++      # Very small example: secure mode enforces 3 attempts lockout
++      attempts = session.get('auth_attempts', 0)
++      if secure:
++        if attempts >= 3:
++          msg = 'Account locked due to repeated attempts.'
++          inc_telemetry_blocked()
++          telemetry = get_session_telemetry()
++          return jsonify({'status':'ok','blocked':True,'message':msg,'telemetry':telemetry,'data':{}}), 429
++        # run secure audit (no leak)
++        session['auth_attempts'] = 0
++        inc_telemetry_blocked()
++        telemetry = get_session_telemetry()
++        return jsonify({'status':'ok','blocked':True,'message':'Secure audit completed','telemetry':telemetry,'data':{'result':'ok'}})
++      else:
++        # vulnerable audit: brute force simulation (no lockout)
++        session['auth_attempts'] = attempts + 1
++        inc_telemetry_exploited()
++        telemetry = get_session_telemetry()
++        return jsonify({'status':'ok','blocked':False,'message':'Vulnerable audit returned credentials','telemetry':telemetry,'data':{'leaked':'password123'}})
++    except Exception as e:
++      telemetry = get_session_telemetry()
++      return jsonify({'status':'error','blocked':False,'message':str(e),'telemetry':telemetry,'data':{}}),500
++
+ (rest unchanged)
+
+--- a/routes/ssrf.py
++++ b/routes/ssrf.py
+@@ -1,120 +1,160 @@
+ (file header)
+-from flask import Blueprint, request, jsonify, render_template
+-ssrf_bp = Blueprint('ssrf', __name__, url_prefix='/ssrf')
+-
+-@ssrf_bp.route('/')
+-def index():
+-  return render_template('features/ssrf.html')
+-
+-@ssrf_bp.route('/api/scan', methods=['POST'])
+-def scan():
+-  # old behavior
+-  return jsonify(result)
++from flask import Blueprint, request, jsonify, render_template, session
++from .some_helper import get_session_telemetry, inc_telemetry_blocked, inc_telemetry_exploited
++import ipaddress
++
++ssrf_bp = Blueprint('ssrf', __name__, url_prefix='/ssrf')
++
++@ssrf_bp.route('/')
++def index():
++  return render_template('features/ssrf.html', show_live_logs=True)
++
++@ssrf_bp.route('/api/scan', methods=['POST'])
++def scan():
++  try:
++    payload = request.json or {}
++    target = payload.get('url','')
++    secure = session.get('security_on', True)
++    if secure:
++      # block private ranges (best-effort parsing)
++      try:
++        ip = ipaddress.ip_address(target.split(':')[0])
++        if ip.is_private or ip.is_loopback:
++          inc_telemetry_blocked()
++          telemetry = get_session_telemetry()
++          return jsonify({'status':'ok','blocked':True,'message':'Blocked private IP range','telemetry':telemetry,'data':{}}), 403
++      except Exception:
++        # if not an ip, continue with safe-mode simulation
++        pass
++      inc_telemetry_blocked()
++      telemetry = get_session_telemetry()
++      return jsonify({'status':'ok','blocked':True,'message':'SSRF blocked (secure)','telemetry':telemetry,'data':{}})
++    else:
++      # Vulnerable: return simulated metadata leak
++      inc_telemetry_exploited()
++      telemetry = get_session_telemetry()
++      leaked = {'instance-id':'i-12345','local-metadata':'169.254.169.254 data...'}
++      return jsonify({'status':'ok','blocked':False,'message':'SSRF returned internal metadata','telemetry':telemetry,'data':leaked})
++  except Exception as e:
++    telemetry = get_session_telemetry()
++    return jsonify({'status':'error','blocked':False,'message':str(e),'telemetry':telemetry,'data':{}}),500
++
+ (rest unchanged)
+
+--- a/routes/phishing.py
++++ b/routes/phishing.py
+@@ -1,120 +1,160 @@
+ (header)
+-from flask import Blueprint, request, jsonify
+-@phishing_bp.route('/api/scan', methods=['POST'])
+-def scan():
+-  # old
+-  return jsonify(result)
++from flask import Blueprint, request, jsonify, session
++from .some_helper import get_session_telemetry, inc_telemetry_blocked, inc_telemetry_exploited
++phishing_bp = Blueprint('phishing', __name__, url_prefix='/phishing')
++
++@phishing_bp.route('/api/scan', methods=['POST'])
++def scan():
++  try:
++    payload = request.json or {}
++    secure = session.get('security_on', True)
++    # ensure payload keys exist
++    if 'email' not in payload:
++      telemetry = get_session_telemetry()
++      return jsonify({'status':'error','blocked':False,'message':'Missing email key','telemetry':telemetry,'data':{}}),400
++    if secure:
++      inc_telemetry_blocked()
++      telemetry = get_session_telemetry()
++      return jsonify({'status':'ok','blocked':True,'message':'Phishing simulation blocked (secure)','telemetry':telemetry,'data':{}})
++    else:
++      inc_telemetry_exploited()
++      telemetry = get_session_telemetry()
++      return jsonify({'status':'ok','blocked':False,'message':'Phishing simulated delivered','telemetry':telemetry,'data':{'delivered':True}})
++  except Exception as e:
++    telemetry = get_session_telemetry()
++    return jsonify({'status':'error','blocked':False,'message':str(e),'telemetry':telemetry,'data':{}}),500
++
+ (rest unchanged)
+
+--- a/routes/forensics.py
++++ b/routes/forensics.py
+@@ -1,120 +1,140 @@
+ (header)
+-from flask import Blueprint, request, jsonify
+-@forensics_bp.route('/api/analyze', methods=['POST'])
+-def analyze():
+-  # old...
+-  return jsonify(result)
++from flask import Blueprint, request, jsonify, session
++from .some_helper import get_session_telemetry, inc_telemetry_blocked
++forensics_bp = Blueprint('forensics', __name__, url_prefix='/forensics')
++
++@forensics_bp.route('/api/analyze', methods=['POST'])
++def analyze():
++  try:
++    payload = request.json or {}
++    # Basic payload validation
++    if 'evidence' not in payload:
++      telemetry = get_session_telemetry()
++      return jsonify({'status':'error','blocked':False,'message':'Missing evidence key','telemetry':telemetry,'data':{}}),400
++    # For demo: always return structured JSON and update telemetry (secure vs vuln not applicable)
++    inc_telemetry_blocked()
++    telemetry = get_session_telemetry()
++    return jsonify({'status':'ok','blocked':True,'message':'Forensics analysis completed','telemetry':telemetry,'data':{'summary':'No malicious traces found'}})
++  except Exception as e:
++    telemetry = get_session_telemetry()
++    return jsonify({'status':'error','blocked':False,'message':str(e),'telemetry':telemetry,'data':{}}),500
++
+

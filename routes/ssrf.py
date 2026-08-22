@@ -16,7 +16,7 @@ ALLOWED_DOMAINS = [
 @ssrf_bp.route('/ssrf')
 def ssrf_page():
     """Renders the Server-Side Request Forgery feature page."""
-    return render_template('features/ssrf.html', active_page='ssrf')
+    return render_template('features/ssrf.html', active_page='ssrf', show_live_logs=True)
 
 @ssrf_bp.route('/api/ssrf/fetch', methods=['POST'])
 def fetch_url_content():

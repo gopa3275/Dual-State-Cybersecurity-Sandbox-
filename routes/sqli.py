@@ -19,7 +19,7 @@ def init_sqli_db():
 
 @sqli_bp.route('/sqli')
 def sqli_page():
-    return render_template('features/sqli.html', active_page='sqli')
+    return render_template('features/sqli.html', active_page='sqli', show_live_logs=True)
 
 @sqli_bp.route('/api/sqli_scan', methods=['POST'])
 def sqli_scan():
