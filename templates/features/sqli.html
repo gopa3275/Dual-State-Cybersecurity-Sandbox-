@@ -169,7 +169,7 @@
                       if (!document.getElementById('diff2html-css')) {
                           const link = document.createElement('link');
                           link.rel = 'stylesheet';
-                          link.href = 'https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.7/diff2html.min.css';
+                          link.href = 'https://cdn.jsdelivr.net/npm/diff2html@3.4.7/dist/diff2html.min.css';
                           link.id = 'diff2html-css';
                           document.head.appendChild(link);
                       }
@@ -180,7 +180,7 @@
                           return;
                       }
                       const s = document.createElement('script');
-                      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.7/diff2html.min.js';
+                      s.src = 'https://cdn.jsdelivr.net/npm/diff2html@3.4.7/dist/diff2html.min.js';
                       s.id = 'diff2html-js';
                       s.onload = () => resolve();
                       s.onerror = () => reject(new Error('Failed to load diff2html'));

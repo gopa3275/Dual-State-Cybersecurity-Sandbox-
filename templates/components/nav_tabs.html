@@ -1,4 +1,4 @@
-<div class="nav-links overflow-x-auto whitespace-nowrap">
+<div class="nav-links overflow-x-auto whitespace-nowrap py-2">
     {# Assumes a 'main' blueprint for the welcome page and 'ctf' for the CTF page #}
     <a href="{{ url_for('welcome.index') }}" class="nav-tab {% if active_page == 'welcome' %}active{% endif %}">Welcome</a>
     <a href="{{ url_for('sqli.sqli_page') }}" class="nav-tab {% if active_page == 'sqli' %}active{% endif %}">SQLi Sandbox</a>
