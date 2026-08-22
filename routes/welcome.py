@@ -9,4 +9,4 @@ def index():
         session['security_on'] = False
     if 'failed_logins' not in session:
         session['failed_logins'] = 0
-    return render_template('index.html', active_page='welcome')
+    return render_template('welcome.html', active_page='welcome')
